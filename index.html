@@ -1494,6 +1494,12 @@ html body .hchip:hover{transform:translateY(-1px)}html body .hchip:active{transf
 html body.bigbg .hchip .wm{width:44px;height:44px;right:14px;top:50%;transform:translateY(-50%) rotate(-6deg);opacity:.13}
 html body.bigbg .hchip{padding-right:66px}
 html body .hchip.on .wm{color:#0e1a26;opacity:.12}
+
+.tgrp{display:flex;flex-direction:column;gap:8px;margin:0 0 14px}
+.tgh{display:flex;align-items:center;gap:8px;padding:2px 4px 0;font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--mu);font-weight:800}
+.tgh i{width:10px;height:10px;border-radius:50%;background:var(--c);flex:none}
+.tgh b{color:var(--ti);font-weight:800}
+.tgh span{margin-left:auto;font-size:11px;padding:2px 8px;border-radius:999px;background:color-mix(in srgb,var(--c) 22%,transparent);color:var(--ti)}
 </style>
 
 
@@ -2243,6 +2249,15 @@ function nowCard(){
  if(skipped.length)h+='<button class="lnk" data-act="unskip">'+skipped.length+' skipped. Bring back</button>';
  return h+'</div>';
 }
+function taskGroups(list,o){
+ var gs={},order=[];
+ list.forEach(function(t){var k=areaOf(t.area)?t.area:'_none';if(!gs[k]){gs[k]=[];order.push(k)}gs[k].push(t)});
+ var rank=function(k){var i=AREAS.map(function(a){return a.id}).indexOf(k);return i<0?99:i};
+ order.sort(function(a,b){var pa=gs[a].some(function(t){return t.pri})?0:1,pb=gs[b].some(function(t){return t.pri})?0:1;return pa-pb||rank(a)-rank(b)});
+ if(order.length<2&&list.length<4)return list.map(function(t){return taskRow(t,o)}).join('');
+ return order.map(function(k){var a=areaOf(k)||{name:'No area',c:'#9fb3c8'};
+  return '<div class="tgrp"><div class="tgh" style="--c:'+a.c+'"><i></i><b>'+esc(a.name)+'</b><span>'+gs[k].length+'</span></div>'+gs[k].map(function(t){return taskRow(t,o)}).join('')+'</div>'}).join('');
+}
 function viewToday(){
  var list=todayList(),d=new Date();
  var dayLbl=d.toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'});
@@ -2280,7 +2295,7 @@ function viewToday(){
   });
  }
  if(rest.length){
-  h+='<div class="sec"><div class="sech"><span class="lbl">Also on your list</span></div>'+rest.map(function(t){return taskRow(t,{pin:true,later:true,drag:true})}).join('');
+  h+='<div class="sec"><div class="sech"><span class="lbl">Also on your list</span></div>'+taskGroups(rest,{pin:true,later:true,drag:true});
   if(list.length>6)h+='<div class="banner"><span>That is a lot for one day. Park a few for later and keep your energy for what matters.</span></div>';
   h+='</div>';
  }
@@ -2297,9 +2312,9 @@ function matches(t){return (!fArea||t.area===fArea)&&(!fq||t.title.toLowerCase()
 function inboxLists(){
  var ib=tasksBy('inbox').filter(matches).reverse(),lt=tasksBy('later').filter(matches).reverse(),f=fq||fArea;
  var h='<div class="sec"><div class="sech"><span class="lbl">Inbox</span><span class="mu">Nothing needs deciding yet</span></div>';
- h+=ib.length?ib.map(function(t){return taskRow(t,{toToday:true,toLater:true})}).join(''):'<div class="empty">'+(f?'Nothing matches that filter.':'Inbox is empty. Anything you capture with Save lands here until you are ready to place it.')+'</div>';
+ h+=ib.length?taskGroups(ib,{toToday:true,toLater:true}):'<div class="empty">'+(f?'Nothing matches that filter.':'Inbox is empty. Anything you capture with Save lands here until you are ready to place it.')+'</div>';
  h+='</div><div class="sec"><div class="sech"><span class="lbl">Later and ideas</span></div>';
- h+=lt.length?lt.map(function(t){return taskRow(t,{toToday:true})}).join(''):'<div class="empty">'+(f?'Nothing matches that filter.':'Parked items live here. They stay out of sight until you pull them in, or until the day you set.')+'</div>';
+ h+=lt.length?taskGroups(lt,{toToday:true}):'<div class="empty">'+(f?'Nothing matches that filter.':'Parked items live here. They stay out of sight until you pull them in, or until the day you set.')+'</div>';
  return h+'</div>';
 }
 function viewInbox(){
