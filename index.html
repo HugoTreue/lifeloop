@@ -930,10 +930,6 @@ body.app-notes .nttitle,body.app-notes .nb-x,body.app-notes #ntQ:focus{border-co
 .nb-pg{padding:2px 0}
 .ntpgl{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:9px;color:var(--ti);width:100%;text-align:left;text-decoration:underline;text-decoration-color:var(--bd)}.ntpgl:hover{background:var(--bg2)}
 .ntadd{display:inline-flex;align-items:center;gap:6px;color:var(--mu);font-size:13px;padding:6px 8px;border-radius:9px;align-self:flex-start}.ntadd:hover{background:var(--bg2)}
-.ntbar2{position:fixed;left:0;right:0;bottom:0;z-index:80;display:flex;gap:2px;overflow-x:auto;padding:6px 8px calc(6px + env(safe-area-inset-bottom));background:var(--bg);border-top:1px solid color-mix(in srgb,#f43f5e 60%,transparent);box-shadow:0 -6px 22px rgba(0,0,0,.25)}
-.ntbar2[hidden]{display:none}
-.ntbar2 button{flex:none;min-width:40px;height:38px;border-radius:10px;font-size:15px;color:var(--ti);background:var(--bg2);padding:0 8px}
-.ntbar2 button:active{background:var(--bd)}
 .ntlist{display:flex;flex-direction:column}
 .ntopt{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:10px 4px;border-top:1px solid var(--bd);color:var(--ti);font-size:14px}
 .ntopt.danger{color:var(--rd)}
@@ -1263,6 +1259,28 @@ body.nt-dragging{user-select:none;-webkit-user-select:none;cursor:grabbing}
 .plgo .nun{min-width:0}.plgo .nun b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* even widths: every section uses the same width, so nothing jumps */
 body .shell>.wrap,body.app-trade .shell>.wrap,body.app-cal .shell>.wrap,body.app-gym .shell>.wrap,body.app-study .shell>.wrap,body.app-tools .shell>.wrap,body.app-nutri .shell>.wrap,body.app-notes .shell>.wrap{max-width:1000px}
+/* notes editing dock (redesign) */
+.ntbar2{--ntac:#f43f5e;position:fixed;left:8px;right:8px;bottom:0;margin:0 auto calc(10px + env(safe-area-inset-bottom));width:max-content;max-width:calc(100vw - 16px);z-index:80;display:flex;align-items:center;gap:2px;padding:6px;border-radius:20px;background:color-mix(in srgb,var(--bg) 95%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid color-mix(in srgb,var(--ntac) 70%,transparent);box-shadow:0 14px 36px rgba(0,0,0,.4),0 0 18px color-mix(in srgb,var(--ntac) 18%,transparent);animation:ntbin .18s ease both}
+@keyframes ntbin{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.ntbar2[hidden]{display:none}
+@media(max-width:760px){.ntbar2{overflow-x:auto;scrollbar-width:none;justify-content:flex-start}.ntbar2::-webkit-scrollbar{display:none}}
+.ntbar2 .ntg{display:flex;align-items:center;gap:2px;padding-right:6px;margin-right:4px;border-right:1px solid color-mix(in srgb,var(--ntac) 30%,transparent);flex:none}
+.ntbar2 .ntg:last-child{border:0;margin:0;padding:0}
+.ntbar2 button{flex:none;position:relative;min-width:42px;height:42px;border-radius:13px;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:0 10px;font-size:15px;font-weight:700;color:var(--ti);background:transparent;border:0;box-shadow:none;transition:background .12s,color .12s,transform .1s}
+.ntbar2 button svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
+.ntbar2 button:hover{background:color-mix(in srgb,var(--ntac) 16%,transparent)}
+.ntbar2 button:active{transform:scale(.92);background:color-mix(in srgb,var(--ntac) 28%,transparent)}
+.ntbar2 button.on{background:color-mix(in srgb,var(--ntac) 26%,transparent);color:var(--ntac);box-shadow:inset 0 0 0 1.5px var(--ntac)}
+.ntbar2 .ntb-main{background:linear-gradient(135deg,color-mix(in srgb,var(--ntac) 78%,#fff),var(--ntac));color:#1a1405;padding:0 14px 0 11px}
+.ntbar2 .ntb-main:hover{background:linear-gradient(135deg,color-mix(in srgb,var(--ntac) 78%,#fff),var(--ntac));filter:brightness(1.08)}
+.ntbar2 .ntb-danger:hover{background:rgba(239,68,68,.2);color:#ef4444}
+.ntbar2 .ntb-i{font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:17px}
+.ntbar2 .ntb-s{text-decoration:line-through}
+.ntbar2 .ntb-l{display:none;font-size:13.5px}
+@media(min-width:761px){.ntbar2 .ntb-l{display:inline}.ntbar2 button[data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 12px);left:50%;transform:translateX(-50%);background:#0b1326;color:#fff;border:1px solid var(--ntac);padding:4px 9px;border-radius:8px;font-size:12px;font-weight:600;white-space:nowrap;pointer-events:none;z-index:2}}
+@media(hover:hover) and (pointer:fine){.ntbar2 .ntb-kb{display:none}}
+html body.ot-celestial .ntbar2{--ntac:var(--gold2);background:rgba(11,19,38,.96)}
+#appNotes{padding-bottom:104px}
 </style>
 
 
@@ -3768,13 +3786,13 @@ document.addEventListener('focusout',function(e){
 function ntBar(on){
  var b=$('#ntbar');
  if(!b){b=document.createElement('div');b.id='ntbar';b.className='ntbar2';b.hidden=true;
-  b.innerHTML=[['ins','＋','Add block'],['turn','Aa','Turn into'],['bold','<b>B</b>','Bold'],['italic','<i>I</i>','Italic'],['strike','<s>S</s>','Strikethrough'],['codef','&lt;/&gt;','Inline code'],['out','⇤','Outdent'],['indent','⇥','Indent'],['up','↑','Move up'],['down','↓','Move down'],['dup','⧉','Duplicate'],['del','🗑','Delete block'],['undo','↶','Undo'],['redo','↷','Redo'],['hide','⌄','Hide keyboard']].map(function(x){return '<button type="button" tabindex="-1" data-ntb="'+x[0]+'" aria-label="'+x[2]+'">'+x[1]+'</button>'}).join('');
+  b.innerHTML=ntBarHtml();
   document.body.appendChild(b);
   b.addEventListener('pointerdown',function(e){e.preventDefault()});b.addEventListener('mousedown',function(e){e.preventDefault()});
   b.addEventListener('click',function(e){var x=e.target.closest('[data-ntb]');if(x)ntBarAct(x.dataset.ntb)});
   if(window.visualViewport){var f=function(){var v=window.visualViewport,off=Math.max(0,window.innerHeight-v.height-v.offsetTop);b.style.bottom=off+'px'};visualViewport.addEventListener('resize',f);visualViewport.addEventListener('scroll',f);b._f=f}
  }
- if(b._f)b._f();b.hidden=!on||app!=='notes';
+ if(b._f)b._f();b.hidden=!on||app!=='notes';if(on)ntBarState();
 }
 function ntBarAct(a){
  var id=nt.focus,e=ntEl(id);if(!id)return;var b=ntPg(nt.page).blocks[ntBi(id)];if(!b)return;if(e)ntRead(e);
@@ -4406,6 +4424,24 @@ document.addEventListener('click',function(e){
   toast('Removed',function(){S.plists.push(it);save();toolsSig='';renderTools()});
  }
 });
+
+
+/* ---------- editing dock ---------- */
+var NTBI={plus:'<path d="M12 5v14M5 12h14"/>',out:'<path d="M4 6h16M11 12h9M4 18h16M8 9l-3 3 3 3"/>',ind:'<path d="M4 6h16M11 12h9M4 18h16M5 9l3 3-3 3"/>',up:'<path d="M12 19V5M6 11l6-6 6 6"/>',down:'<path d="M12 5v14M6 13l6 6 6-6"/>',dup:'<rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5 15V6.5A1.5 1.5 0 0 1 6.5 5H15"/>',del:'<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',undo:'<path d="M9 14L4 9l5-5M4 9h10a6 6 0 010 12h-3"/>',redo:'<path d="M15 14l5-5-5-5M20 9H10a6 6 0 000 12h3"/>',code:'<path d="M8 8l-4 4 4 4M16 8l4 4-4 4"/>',hide:'<path d="M6 9l6 6 6-6"/>'};
+function ntBi_(n){return '<svg viewBox="0 0 24 24" aria-hidden="true">'+NTBI[n]+'</svg>'}
+function ntBarHtml(){
+ function bt(k,inner,tip,cls){return '<button type="button" tabindex="-1" data-ntb="'+k+'" data-tip="'+tip+'" aria-label="'+tip+'"'+(cls?' class="'+cls+'"':'')+'>'+inner+'</button>'}
+ return '<div class="ntg">'+bt('ins',ntBi_('plus')+'<span class="ntb-l">Add</span>','Add a block','ntb-main')+bt('turn','Aa<span class="ntb-l">Turn into</span>','Turn this block into…')+'</div>'
+  +'<div class="ntg">'+bt('bold','B','Bold (Ctrl+B)')+bt('italic','I','Italic (Ctrl+I)','ntb-i')+bt('strike','S','Strikethrough','ntb-s')+bt('codef',ntBi_('code'),'Inline code')+'</div>'
+  +'<div class="ntg">'+bt('out',ntBi_('out'),'Outdent (Shift+Tab)')+bt('indent',ntBi_('ind'),'Indent (Tab)')+bt('up',ntBi_('up'),'Move block up')+bt('down',ntBi_('down'),'Move block down')+'</div>'
+  +'<div class="ntg">'+bt('dup',ntBi_('dup'),'Duplicate block')+bt('del',ntBi_('del'),'Delete block','ntb-danger')+'</div>'
+  +'<div class="ntg">'+bt('undo',ntBi_('undo'),'Undo')+bt('redo',ntBi_('redo'),'Redo')+bt('hide',ntBi_('hide'),'Done, hide keyboard','ntb-kb')+'</div>';
+}
+function ntBarState(){
+ var b=$('#ntbar');if(!b||b.hidden)return;var ae=document.activeElement,ed=ae&&ae.classList&&ae.classList.contains('nb-x');
+ [['bold','bold'],['italic','italic'],['strike','strikeThrough']].forEach(function(c){var el=b.querySelector('[data-ntb="'+c[0]+'"]');if(!el)return;var on=false;try{on=!!ed&&document.queryCommandState(c[1])}catch(x){}el.classList.toggle('on',on)});
+}
+document.addEventListener('selectionchange',ntBarState);
 
 /* ================= Extras: bodyweight, charts, calculator, Today, review, backup, install, reminders ================= */
 function xLine(a,o){
