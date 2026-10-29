@@ -1486,6 +1486,41 @@ html body .cvseg button.on{background:transparent;box-shadow:none;color:var(--ti
 .cvfree{padding:10px 12px;border-radius:14px;border:1px dashed var(--bd);margin-bottom:8px}
 .cvat{min-width:96px;display:flex;align-items:center}
 
+/* ===== Lifeloop home: organised draft ===== */
+#appLife{gap:16px}
+#appLife>.card{padding:18px}
+/* 1. hero: greeting + level joined into one block */
+#appLife #greet{order:1;margin-bottom:-16px;border-bottom-left-radius:0;border-bottom-right-radius:0;border-bottom-color:transparent !important;box-shadow:none !important;padding-bottom:6px}
+#appLife>.hd{order:2;border-top-left-radius:0;border-top-right-radius:0;border-top-color:transparent !important;padding-top:8px}
+#appLife>.hd .hr1{display:none}
+#appLife>.hd .lvl{margin-bottom:12px}
+#appLife>.hd .strip{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+#appLife>.hd .strip>div{min-height:84px;display:flex;flex-direction:column;justify-content:center}
+/* 2. capture right under the hero */
+#appLife>.cap{order:3;padding:14px 18px}
+#appLife>.cap .caphint{margin-top:8px}
+/* 3. today at a glance as equal tiles */
+#appLife>.tov{order:4;display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:12px;padding:18px}
+#appLife>.tov>.tovh,#appLife>.tov>.upn{grid-column:1/-1;margin:0}
+#appLife>.tov .tovh h3{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--mu);font-weight:800}
+#appLife>.tov .tovr{grid-template-columns:10px 1fr;grid-template-rows:auto auto 6px;row-gap:8px;padding:14px;border-radius:16px;min-height:112px;align-content:start;border:1px solid var(--bd)}
+#appLife>.tov .tovr:hover{border-color:var(--gold2)}
+#appLife>.tov .tovl{font-size:13px;letter-spacing:.02em}
+#appLife>.tov .tovt{grid-column:1/-1;grid-row:2;font-size:13px;color:var(--mu);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+#appLife>.tov .tovb{grid-row:3;align-self:end}
+/* 4. main work area */
+#appLife>main.card{order:5;padding:0 0 4px}
+@media(max-width:700px){
+ #appLife>.card{padding:16px}
+ #appLife>.tov{grid-template-columns:1fr 1fr;gap:10px;padding:16px}
+ #appLife>.tov .tovr{min-height:104px;padding:12px}
+ #appLife>.cap .caphint{display:none}
+ #appLife>.hd .strip>div{min-height:76px}
+ #appLife>.tov .tovr:last-child{grid-column:1/-1;min-height:84px}
+ #appLife>.hd .lvl .pill{width:auto;flex:none;padding:5px 12px}
+ #appLife>.hd .lvl{justify-content:flex-start}
+}
+
 html body .hchip small{white-space:nowrap}
 /* habit chips: flat, no dark under-edge; watermark kept inside */
 html body .hchip,html body .hchip:hover,html body .hchip:active{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c,var(--mu)) 38%,transparent) !important}
@@ -1500,6 +1535,53 @@ html body .hchip.on .wm{color:#0e1a26;opacity:.12}
 .tgh i{width:10px;height:10px;border-radius:50%;background:var(--c);flex:none}
 .tgh b{color:var(--ti);font-weight:800}
 .tgh span{margin-left:auto;font-size:11px;padding:2px 8px;border-radius:999px;background:color-mix(in srgb,var(--c) 22%,transparent);color:var(--ti)}
+
+/* ===== Polish pass ===== */
+@media(min-width:901px){#fab{display:none}}
+/* one joined header block on every section (desktop; phones show the title bar instead) */
+@media(min-width:901px){
+:is(#appCal,#appGym,#appNutri,#appStudy,#appTools,#appNotes,#appDrop,#appTrade)>.secgreet{margin-bottom:-14px;border-bottom-left-radius:0;border-bottom-right-radius:0;border-bottom-color:transparent !important;box-shadow:none !important;padding-bottom:6px}
+:is(#appCal,#appGym,#appNutri,#appStudy,#appTools,#appNotes,#appDrop,#appTrade)>.thd{border-top-left-radius:0;border-top-right-radius:0;border-top-color:transparent !important;padding-top:8px}
+}
+/* heatmap */
+.hc.tdy{outline:1.5px solid var(--gold2);outline-offset:1px}
+html body .heat{grid-auto-columns:22px;grid-template-rows:repeat(7,22px);gap:5px;justify-content:start;width:auto;max-width:100%;overflow-x:auto}
+html body .hc{width:22px;height:22px;border-radius:6px}
+html body .legend .hc{width:12px;height:12px}
+/* review stats: five even tiles */
+.stats:has(>div:nth-child(5):last-child){grid-template-columns:repeat(5,minmax(0,1fr))}
+.stats:has(>div:nth-child(5):last-child) div:last-child:nth-child(odd){grid-column:auto}
+/* habit watermark stays off the day dots */
+html body.bigbg .hrow .wm{right:auto;left:46%;width:84px;height:84px;opacity:.1}
+/* gym: library button sits right, in line */
+#appGym>button.k.sm,#appGym>.k.sm{align-self:flex-end}
+/* tabs fade at the edges when they scroll */
+#tabs{-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 10px,#000 calc(100% - 10px),transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 10px,#000 calc(100% - 10px),transparent 100%)}
+@media(min-width:901px){#tabs{-webkit-mask-image:none;mask-image:none}}
+@media(max-width:700px){
+ /* forms stack instead of cutting text */
+ .form{gap:8px}
+ .form input[type=text],.form input:not([type]){flex:1 1 100%}
+ .form select,.form input[type=date]{flex:1 1 calc(50% - 4px)}
+ .form input[type=number]{flex:1 1 calc(50% - 4px)}
+ .form .k.go{flex:1 1 100%}
+ /* hide decoration that fights with content on small screens */
+ html body.bigbg .hrow .wm{display:none}
+ .stats:has(>div:nth-child(5):last-child){grid-template-columns:repeat(2,minmax(0,1fr))}
+ .stats:has(>div:nth-child(5):last-child) div:last-child:nth-child(odd){grid-column:1/-1}
+ html body .heat{grid-auto-columns:minmax(0,1fr);grid-template-rows:repeat(7,auto);gap:4px;width:100%}
+ html body .hc{width:100%;height:auto;aspect-ratio:1/1}
+ html body .legend .hc{width:12px;height:12px;aspect-ratio:auto}
+ /* study rows may wrap */
+ .srow .stt{flex-wrap:wrap;row-gap:4px}.srow .stt span.tx{white-space:normal;overflow:visible;text-overflow:clip;flex:1 1 100%}
+ /* nutrition date bar in one row */
+ .nudate{flex-wrap:nowrap}
+ .nudate .k.sm{padding:7px 10px;font-size:12px}
+ /* tools: two per row */
+ #appTools .tgrid,#appTools .ttiles{grid-template-columns:1fr 1fr}
+ .ttile{min-height:150px;padding:14px;border-radius:22px}
+ .ttile b{font-size:15px}.ttile>span:last-child{font-size:12px}.ttile .tic{width:48px;height:48px;border-radius:15px}
+}
 </style>
 
 
@@ -2325,7 +2407,7 @@ function heatmap(){
  var t=today(),start=addDays(weekStart(t),-12*7),by={},act=0,i,cells='';
  S.log.forEach(function(e){by[e.day]=(by[e.day]||0)+e.xp});
  for(i=0;i<91;i++){var d=addDays(start,i),v=by[d]||0,l=v===0?0:v<=10?1:v<=30?2:v<=60?3:4;if(v&&d<=t)act++;
-  cells+='<i class="hc'+(l?' l'+l:'')+(d>t?' fut':'')+(d===t?' now':'')+'" title="'+d+': '+v+' points"></i>'}
+  cells+='<i class="hc'+(l?' l'+l:'')+(d>t?' fut':'')+(d===t?' tdy':'')+'" title="'+d+': '+v+' points"></i>'}
  return '<div class="sec"><div class="sech"><span class="lbl">Last 13 weeks</span><span class="mu">'+act+' active days</span></div><div class="heat">'+cells+'</div><div class="legend">Less <i class="hc"></i><i class="hc l1"></i><i class="hc l2"></i><i class="hc l3"></i><i class="hc l4"></i> More</div></div>';
 }
 
@@ -2365,7 +2447,7 @@ function viewHabits(){
  var t=today(),days=[],i;
  for(i=6;i>=0;i--)days.push(addDays(t,-i));
  var wd=['S','M','T','W','T','F','S'];
- var h='<form class="form" data-form="habit"><input type="text" id="hName" placeholder="A habit to repeat, like Stretch for 5 minutes" aria-label="New habit"><select id="hArea" aria-label="Habit area">'+areaOptions('health')+'</select><button class="k go" type="submit">Add habit</button></form>';
+ var h='<form class="form" data-form="habit"><input type="text" id="hName" placeholder="A habit to repeat" aria-label="New habit"><select id="hArea" aria-label="Habit area">'+areaOptions('health')+'</select><button class="k go" type="submit">Add habit</button></form>';
  if(S.habits.length)h+='<div class="fchips"><button class="fc'+(hDue?' on':'')+'" data-act="hdue" aria-pressed="'+hDue+'">Due today only</button></div>';
  if(!S.habits.length)h+='<div class="empty">No habits yet. Add one small thing you want to repeat. Missing a single day never resets a streak.</div>';
  var shown=function(x){return !hDue||dueOn(x,t)};
@@ -5104,7 +5186,7 @@ function applyApp(){
  Object.keys(map).forEach(function(a){document.body.classList.toggle('app-'+a,app===a);var c=$(map[a]);if(c)c.hidden=app!==a});
  document.body.classList.toggle('tpriv',tpriv&&app==='trade');
  var mm=$('#mtMenu');if(mm&&!mm.firstChild)mm.innerHTML=I('menu',20);
- var mt=$('#mtTitle');if(mt)mt.textContent={life:'Lifeloop',trade:'TradeCycle',drop:'Organic Dropshipping',gym:'Gym',cal:'Calendar',study:'Study',tools:'Tools',nutri:'Nutrition',notes:'Notes'}[app];
+ var mt=$('#mtTitle');if(mt)mt.textContent={life:'Lifeloop',trade:'TradeCycle',drop:'Dropshipping',gym:'Gym',cal:'Calendar',study:'Study',tools:'Tools',nutri:'Nutrition',notes:'Notes'}[app];
 }
 function renderSide(){
  var s=$('#side');if(!s)return;
