@@ -1285,6 +1285,13 @@ html body.ot-celestial .ntbar2{--ntac:var(--gold2);background:rgba(11,19,38,.96)
 .nb-p .nb-x,.nb-ul .nb-x,.nb-ol .nb-x,.nb-td .nb-x,.nb-tg .nb-x,.nb-co .nb-x,.nb-q .nb-x,.nb-cx,.nb-cap{font-weight:400}
 .nb-tbl tr:first-child td{font-weight:700}
 .nb-x b,.nb-x strong,.nb-cx b,.nb-cx strong{font-weight:800;color:var(--ti)}
+/* clear selected states */
+.ntbar2 button.on{background:var(--ntac);color:#1a1405;box-shadow:0 0 0 2px color-mix(in srgb,var(--ntac) 35%,transparent),0 3px 10px rgba(0,0,0,.35)}
+.ntbar2 button.on:hover{background:var(--ntac);filter:brightness(1.08)}
+.ntbar2 .ntb-main.on{box-shadow:0 0 0 2px #fff4}
+.ntopt.cur{background:color-mix(in srgb,var(--gold2,#f43f5e) 16%,transparent);box-shadow:inset 3px 0 0 var(--gold2,#f43f5e);border-radius:10px;padding-left:10px}
+.ntck2{margin-left:auto;font-size:12px;font-weight:800;color:var(--gold2,#f43f5e);white-space:nowrap}
+.nsp .seg button.on{box-shadow:0 0 0 1.5px var(--gold2,#f43f5e) inset}
 </style>
 
 
@@ -3793,7 +3800,7 @@ function ntBar(on){
   b.innerHTML=ntBarHtml();
   document.body.appendChild(b);
   b.addEventListener('pointerdown',function(e){e.preventDefault()});b.addEventListener('mousedown',function(e){e.preventDefault()});
-  b.addEventListener('click',function(e){var x=e.target.closest('[data-ntb]');if(x)ntBarAct(x.dataset.ntb)});
+  b.addEventListener('click',function(e){var x=e.target.closest('[data-ntb]');if(x){ntBarAct(x.dataset.ntb);setTimeout(ntBarState,30)}});
   if(window.visualViewport){var f=function(){var v=window.visualViewport,off=Math.max(0,window.innerHeight-v.height-v.offsetTop);b.style.bottom=off+'px'};visualViewport.addEventListener('resize',f);visualViewport.addEventListener('scroll',f);b._f=f}
  }
  if(b._f)b._f();b.hidden=!on||app!=='notes';if(on)ntBarState();
@@ -3821,7 +3828,7 @@ function ntSh(t,body){return '<div class="nsh-h"><h3>'+esc(t)+'</h3><button clas
 function ntShDraw(){
  var o=ntShM,pn=ntShEl().querySelector('.nsp');if(!o)return;var p=ntPg(nt.page),h='';var xh=ntShExtra(o);if(xh!==null){pn.innerHTML=xh;ntShAfter(o);return}
  if(o.mode==='ins'){
-  h=ntSh(o.turn?'Turn into':'Add a block','<input id="ntInsQ" class="ntinsq" type="search" placeholder="Filter blocks…" autocomplete="off"><div class="ntlist">'+NTTYPES.filter(function(t){return !(o.turn&&t[0]==='pg'&&0)}).map(function(t){return '<button class="ntopt" data-nt="blk" data-t="'+t[0]+'"><span class="ntoi">'+t[2]+'</span><span class="nun"><b>'+t[1]+'</b><span class="mu">'+t[3]+'</span></span></button>'}).join('')+'</div>');
+  h=ntSh(o.turn?'Turn into':'Add a block','<input id="ntInsQ" class="ntinsq" type="search" placeholder="Filter blocks…" autocomplete="off"><div class="ntlist">'+NTTYPES.filter(function(t){return !(o.turn&&t[0]==='pg'&&0)}).map(function(t){return '<button class="ntopt'+(o.turn&&(ntFindB(o.id)||{}).t===t[0]?' cur':'')+'" data-nt="blk" data-t="'+t[0]+'"><span class="ntoi">'+t[2]+'</span><span class="nun"><b>'+t[1]+'</b><span class="mu">'+t[3]+'</span></span>'+(o.turn&&(ntFindB(o.id)||{}).t===t[0]?'<span class="ntck2">✓ Selected</span>':'')+'</button>'}).join('')+'</div>');
  }else if(o.mode==='icon'){
   h=ntSh('Page icon','<div class="nuform"><div class="ntemo">'+NTEMO.map(function(x){return '<button data-nt="seticon" data-e="'+x+'">'+x+'</button>'}).join('')+'</div><label class="nulab">Or type any emoji<input id="ntEmo" maxlength="4" placeholder="🙂"></label><div class="nuact"><button class="k" data-nt="seticon" data-e="">Remove icon</button><div class="sp"></div><button class="k go" data-nt="emoset">Use</button></div></div>');
  }else if(o.mode==='cover'){
@@ -4435,7 +4442,7 @@ var NTBI={plus:'<path d="M12 5v14M5 12h14"/>',out:'<path d="M4 6h16M11 12h9M4 18
 function ntBi_(n){return '<svg viewBox="0 0 24 24" aria-hidden="true">'+NTBI[n]+'</svg>'}
 function ntBarHtml(){
  function bt(k,inner,tip,cls){return '<button type="button" tabindex="-1" data-ntb="'+k+'" data-tip="'+tip+'" aria-label="'+tip+'"'+(cls?' class="'+cls+'"':'')+'>'+inner+'</button>'}
- return '<div class="ntg">'+bt('ins',ntBi_('plus')+'<span class="ntb-l">Add</span>','Add a block','ntb-main')+bt('turn','Aa<span class="ntb-l">Turn into</span>','Turn this block into…')+'</div>'
+ return '<div class="ntg">'+bt('ins',ntBi_('plus')+'<span class="ntb-l">Add</span>','Add a block','ntb-main')+bt('turn','<span class="ntb-t">Aa</span><span class="ntb-l">Text</span>','Turn this block into…')+'</div>'
   +'<div class="ntg">'+bt('bold','B','Bold (Ctrl+B)')+bt('italic','I','Italic (Ctrl+I)','ntb-i')+bt('strike','S','Strikethrough','ntb-s')+bt('codef',ntBi_('code'),'Inline code')+'</div>'
   +'<div class="ntg">'+bt('out',ntBi_('out'),'Outdent (Shift+Tab)')+bt('indent',ntBi_('ind'),'Indent (Tab)')+bt('up',ntBi_('up'),'Move block up')+bt('down',ntBi_('down'),'Move block down')+'</div>'
   +'<div class="ntg">'+bt('dup',ntBi_('dup'),'Duplicate block')+bt('del',ntBi_('del'),'Delete block','ntb-danger')+'</div>'
@@ -4443,8 +4450,12 @@ function ntBarHtml(){
 }
 function ntBarState(){
  var b=$('#ntbar');if(!b||b.hidden)return;var ae=document.activeElement,ed=ae&&ae.classList&&ae.classList.contains('nb-x');
- [['bold','bold'],['italic','italic'],['strike','strikeThrough']].forEach(function(c){var el=b.querySelector('[data-ntb="'+c[0]+'"]');if(!el)return;var on=false;try{on=!!ed&&document.queryCommandState(c[1])}catch(x){}el.classList.toggle('on',on)});
+ [['bold','bold'],['italic','italic'],['strike','strikeThrough']].forEach(function(c){var el=b.querySelector('[data-ntb="'+c[0]+'"]');if(!el)return;var on=false;try{on=!!ed&&document.queryCommandState(c[1])}catch(x){}el.classList.toggle('on',on);el.setAttribute('aria-pressed',on?'true':'false')});
+ var cb=nt.focus?ntFindB(nt.focus):null,tn=b.querySelector('[data-ntb="turn"]');
+ if(tn&&cb){var ty=NTTYPES.filter(function(x){return x[0]===cb.t})[0];if(ty){tn.querySelector('.ntb-t').textContent=ty[2];tn.querySelector('.ntb-l').textContent=ty[1];tn.classList.toggle('on',cb.t!=='p')}}
+ var ci=b.querySelector('[data-ntb="codef"]');if(ci){var inCode=false;try{var sl=getSelection(),nd=sl&&sl.anchorNode;while(nd&&nd!==ae){if(nd.nodeType===1&&nd.tagName==='CODE'){inCode=true;break}nd=nd.parentNode}}catch(x){}ci.classList.toggle('on',inCode)}
 }
+document.addEventListener('keyup',function(){ntBarState()});document.addEventListener('pointerup',function(){setTimeout(ntBarState,0)});
 document.addEventListener('selectionchange',ntBarState);
 
 /* ================= Extras: bodyweight, charts, calculator, Today, review, backup, install, reminders ================= */
