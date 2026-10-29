@@ -1466,6 +1466,25 @@ body.app-notes #fab,body.kbd #fab,body.kbd #bnav,body.app-trade #fab{display:non
  #appCal .tbar.cvtb .k.go{margin-left:auto}
 }
 .cvb.sm,.cvb[style*="height:2"]{flex-direction:row;gap:6px;align-items:center}
+
+/* filter chips follow the theme, clear on/off */
+html body .cchip{display:inline-flex;align-items:center;gap:6px;background:transparent !important;color:var(--mu) !important;border:1.5px solid var(--bd) !important;box-shadow:none !important;font-weight:700;opacity:.8;transition:background-color .18s,border-color .18s,color .18s,opacity .18s,transform .12s}
+html body .cchip::before{content:"";width:8px;height:8px;border-radius:50%;border:1.5px solid currentColor;flex:none;transition:background-color .18s}
+html body .cchip.on{background:color-mix(in srgb,var(--gold2) 20%,transparent) !important;color:var(--ti) !important;border-color:var(--gold2) !important;opacity:1}
+html body .cchip.on::before{background:var(--gold2);border-color:var(--gold2)}
+.cvseg{position:relative}
+.cvseg button{position:relative;z-index:1}
+html body .cvseg button.on{background:transparent;box-shadow:none;color:var(--ti)}
+.cvind{position:absolute;left:0;top:3px;bottom:3px;border-radius:9px;background:color-mix(in srgb,var(--gold2) 20%,var(--bg));box-shadow:inset 0 0 0 1.5px var(--gold2);transition:transform .34s cubic-bezier(.3,1.25,.4,1),width .34s cubic-bezier(.3,1.25,.4,1);z-index:0;pointer-events:none}
+.cvag{gap:0;padding:10px 12px 14px}
+.cvagd{border:0;padding:6px 0 10px}
+.cvagh{display:block;padding:4px 2px 8px}
+.cvar{--c:var(--bl);position:relative;margin:0 0 8px;padding:11px 12px 11px 14px;border-radius:14px;background:color-mix(in srgb,var(--c) 12%,var(--bg2));border:1px solid color-mix(in srgb,var(--c) 45%,transparent);overflow:hidden;gap:10px}
+.cvar::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c)}
+.cvar .cdot{display:none}
+.cvar.c-green{--c:var(--gr)}.cvar.c-blue{--c:var(--bl)}.cvar.c-gold{--c:var(--gold2)}.cvar.c-red{--c:var(--rd)}
+.cvfree{padding:10px 12px;border-radius:14px;border:1px dashed var(--bd);margin-bottom:8px}
+.cvat{min-width:96px;display:flex;align-items:center}
 </style>
 
 
@@ -4852,7 +4871,7 @@ function renderCalTL(){
  var tl='<section class="card cvcard"><div class="cvscroll" id="cvScroll" style="--px:'+PX+'px;--n:'+days.length+'">'+hdr+allr+'<div class="cvrow cvgrid">'+gut+cols+'</div></div></section>';
  /* agenda (phones, week view) */
  var ag='<section class="card cvag">'+days.map(function(d,i){
-  var x=data[i],rows=x.all.map(function(it){return '<button class="cvar"'+cvAttr(it)+cvStyle(it)+'><i class="cdot '+(it.col||'')+'"'+(it.c?' style="background:'+it.c+'"':'')+'></i><span class="cvat">All day</span><span class="cvatx">'+esc(it.t)+'</span></button>'}).join('')+x.timed.map(function(it){return '<button class="cvar"'+cvAttr(it)+'><i class="cdot '+(it.col||'')+'"'+(it.c?' style="background:'+it.c+'"':'')+'></i><span class="cvat">'+cvFmt(it.s)+'–'+cvFmt(it.e)+'</span><span class="cvatx">'+esc(it.t)+'</span></button>'}).join('');
+  var x=data[i],rows=x.all.map(function(it){return '<button class="cvar '+(it.col||'')+'"'+cvAttr(it)+cvStyle(it)+'><i class="cdot '+(it.col||'')+'"'+(it.c?' style="background:'+it.c+'"':'')+'></i><span class="cvat">All day</span><span class="cvatx">'+esc(it.t)+'</span></button>'}).join('')+x.timed.map(function(it){return '<button class="cvar '+(it.col||'')+'"'+cvAttr(it)+'><i class="cdot '+(it.col||'')+'"'+(it.c?' style="background:'+it.c+'"':'')+'></i><span class="cvat">'+cvFmt(it.s)+'–'+cvFmt(it.e)+'</span><span class="cvatx">'+esc(it.t)+'</span></button>'}).join('');
   return '<div class="cvagd'+(d===t0?' today':'')+'"><button class="cvagh" data-cvd="'+d+'">'+esc(tfmt(d,{weekday:'long',day:'numeric',month:'short'}))+(d===t0?' · Today':'')+'</button>'+(rows||'<div class="mu cvfree">Free</div>')+'</div>';
  }).join('')+'</section>';
  el.innerHTML=h+'<div class="cvwrap cv-'+calV+'">'+tl+(wk?ag:'')+'</div>';
@@ -4867,6 +4886,20 @@ function cvSwitch(){return '<section class="card cview"><div class="cvseg" role=
   renderCalTL();
  };
 })();
+
+/* sliding indicator for Day/Week/Month */
+var cvPrev=-1;
+function cvInd(){
+ var sg=document.querySelector('#appCal .cvseg');if(!sg)return;
+ var bs=[].slice.call(sg.querySelectorAll('button')),cur=bs.findIndex(function(b){return b.classList.contains('on')});if(cur<0)return;
+ var ind=document.createElement('span');ind.className='cvind';sg.insertBefore(ind,sg.firstChild);
+ function place(i){var b=bs[i];ind.style.width=b.offsetWidth+'px';ind.style.transform='translateX('+b.offsetLeft+'px)'}
+ ind.style.transition='none';place(cvPrev>=0&&cvPrev<bs.length&&!REDUCE?cvPrev:cur);
+ void ind.offsetWidth;
+ requestAnimationFrame(function(){ind.style.transition='';place(cur)});
+ cvPrev=cur;
+}
+(function(){var r=renderCal;renderCal=function(){r();cvInd()}})();
 function cvSync(){var p=calD.split('-');cY=+p[0];cM=+p[1]-1}
 document.addEventListener('click',function(e){
  var b=e.target.closest&&e.target.closest('[data-cv],[data-cvn],[data-cvt],[data-cvd],[data-cvadd]');if(!b||app!=='cal')return;
