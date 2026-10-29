@@ -1353,6 +1353,31 @@ body.app-notes #fab,body.app-notes #bnav,body.kbd #fab,body.kbd #bnav,body.app-t
  #offb{bottom:150px}
 }
 @media(prefers-reduced-motion:reduce){#fab{transition:none}}
+
+/* smoothness */
+@media(prefers-reduced-motion:no-preference){
+ .ov:not([hidden]):not(.uxgh){animation:uxfade .18s ease both}
+ .ov:not([hidden]):not(.uxgh) .dlg{animation:uxpop .26s cubic-bezier(.2,.9,.25,1.05) both}
+ .nsh:not([hidden]):not(.uxgh) .nsb{animation:uxfade .2s ease both}
+ .nsh:not([hidden]):not(.uxgh) .nsp{animation:uxrise .28s cubic-bezier(.2,.9,.25,1) both}
+ .uxgh{pointer-events:none;animation:uxfadeout .17s ease forwards !important}
+ .uxgh .dlg,.uxgh .nsp{animation:uxpopout .17s ease forwards !important}
+ details[open]>:not(summary){animation:vin .26s ease both}
+ .uxbar{animation:uxdrop .3s cubic-bezier(.2,.9,.25,1.05) both}
+ #fab,#bnav{animation:uxfade .4s ease both}
+ .cmdi,.upc,.sitem,.tovr,.ttile,.k,.ib,.tab,.seg button,.otopt,.hrow,.gcard,.rcard,.chk,.gck,.cchip,.fc{transition-property:background-color,border-color,color,box-shadow,transform,opacity;transition-duration:.16s;transition-timing-function:ease}
+ :where(.k,.ib,.sitem,.tovr,.upc,.ttile,.cmdi,.tab,.otopt,.cchip):active{transform:scale(.97)}
+ .card{transition:box-shadow .25s ease,border-color .25s ease,background-color .25s ease}
+ .side{transition:transform .28s cubic-bezier(.2,.8,.2,1),width .24s cubic-bezier(.2,.8,.2,1)}
+ .view-fade,#view{will-change:auto}
+ .sitem .stxt,.sbrand .stxt{transition:opacity .18s ease}
+}
+@keyframes uxfade{from{opacity:0}to{opacity:1}}
+@keyframes uxfadeout{from{opacity:1}to{opacity:0}}
+@keyframes uxpop{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes uxpopout{from{opacity:1;transform:none}to{opacity:0;transform:translateY(8px) scale(.97)}}
+@keyframes uxrise{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
+@keyframes uxdrop{from{opacity:0;transform:translate(-50%,-14px)}to{opacity:1;transform:translate(-50%,0)}}
 </style>
 
 
@@ -3886,7 +3911,7 @@ function ntBarAct(a){
 var ntShM=null;
 function ntShEl(){var e=$('#ntsh');if(!e){e=document.createElement('div');e.id='ntsh';e.className='nsh';e.hidden=true;e.innerHTML='<div class="nsb" data-nt="shclose"></div><div class="nsp" role="dialog" aria-modal="true"></div>';document.body.appendChild(e)}return e}
 function ntSheet(o){ntShM=o;ntShEl().hidden=false;document.body.classList.add('nu-open');ntShDraw()}
-function ntShClose(){ntShM=null;var e=$('#ntsh');if(e)e.hidden=true;document.body.classList.remove('nu-open')}
+function ntShClose(){ntShM=null;var e=$('#ntsh');if(e){uxGhost(e);e.hidden=true}document.body.classList.remove('nu-open')}
 function ntSh(t,body){return '<div class="nsh-h"><h3>'+esc(t)+'</h3><button class="ib" data-nt="shclose" aria-label="Close">'+I('x',18)+'</button></div>'+body}
 function ntShDraw(){
  var o=ntShM,pn=ntShEl().querySelector('.nsp');if(!o)return;var p=ntPg(nt.page),h='';var xh=ntShExtra(o);if(xh!==null){pn.innerHTML=xh;ntShAfter(o);return}
@@ -5540,7 +5565,11 @@ function renderAll(){if(S.hide&&S.hide[app]&&app!=='life'){app='life';lsSet('lif
 
 /* ---------- dialog ---------- */
 function openDlg(html){var d=$('#dlg');d.innerHTML=html;$('#ov').hidden=false;var f=d.querySelector('input,select,textarea');if(f)f.focus()}
-function closeDlg(){$('#ov').hidden=true;$('#dlg').innerHTML=''}
+function uxGhost(el){
+ if(REDUCE||!el||el.hidden)return;
+ try{var g=el.cloneNode(true);g.classList.add('uxgh');g.removeAttribute('id');[].forEach.call(g.querySelectorAll('[id]'),function(x){x.removeAttribute('id')});[].forEach.call(g.querySelectorAll('input,textarea,select,button'),function(x){x.tabIndex=-1});document.body.appendChild(g);setTimeout(function(){g.remove()},190)}catch(e){}
+}
+function closeDlg(){var o=$('#ov');if(!o.hidden){var g=o.cloneNode(true);if(!REDUCE){g.removeAttribute('id');g.classList.add('uxgh');g.querySelectorAll('input,textarea,select,button').forEach(function(x){x.tabIndex=-1});document.body.appendChild(g);setTimeout(function(){g.remove()},190)}}o.hidden=true;$('#dlg').innerHTML=''}
 function openEdit(kind,id){
  var o;
  if(kind==='task'){
