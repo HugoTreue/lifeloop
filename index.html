@@ -1292,6 +1292,31 @@ html body.ot-celestial .ntbar2{--ntac:var(--gold2);background:rgba(11,19,38,.96)
 .ntopt.cur{background:color-mix(in srgb,var(--gold2,#f43f5e) 16%,transparent);box-shadow:inset 3px 0 0 var(--gold2,#f43f5e);border-radius:10px;padding-left:10px}
 .ntck2{margin-left:auto;font-size:12px;font-weight:800;color:var(--gold2,#f43f5e);white-space:nowrap}
 .nsp .seg button.on{box-shadow:0 0 0 1.5px var(--gold2,#f43f5e) inset}
+/* dropshipping, archive, hide mode */
+body.app-drop{--gold1:#a7f3d0;--gold2:#10b981;--gold3:#047857;--goldtxt:#047857;--glow:rgba(16,185,129,.22);--glow2:rgba(4,120,87,.10)}
+:root[data-theme=dark] body.app-drop{--goldtxt:#34d399}
+body:is(.app-drop){background:radial-gradient(820px 440px at 10% -8%,var(--glow),transparent 65%) fixed,radial-gradient(760px 460px at 100% 108%,var(--glow2),transparent 65%) fixed,linear-gradient(160deg,var(--page-a),var(--page-b)) fixed;background-color:var(--page-b)}
+body.app-drop .card,body.app-drop .ib,body.app-drop .k.sm{border:1px solid color-mix(in srgb,var(--gold2) 70%,transparent)}
+#appDrop{display:flex;flex-direction:column;gap:14px}
+#appDrop[hidden]{display:none}
+.dropph{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:44px 20px}
+.dropph h3{margin:0;font:700 22px var(--fd);color:var(--ti)}
+.dropico{width:84px;height:84px;border-radius:26px;display:grid;place-items:center;color:var(--gold2);background:color-mix(in srgb,var(--gold2) 14%,transparent);border:1px dashed color-mix(in srgb,var(--gold2) 60%,transparent)}
+.sitem[hidden]{display:none}
+.arcbk{display:flex}
+.arccard,.plcard{padding:16px}
+.arccard{display:flex;flex-direction:column;gap:10px}
+.arccard h3{margin:0}
+.arcrow{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:12px 14px;border-radius:16px;background:var(--bg2);border:1px solid color-mix(in srgb,var(--gold2) 60%,transparent);color:var(--ti);transition:transform .12s,box-shadow .12s}
+.arcrow:hover{transform:translateY(-2px);box-shadow:0 10px 22px -14px var(--gold2)}
+.arcic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:color-mix(in srgb,var(--gold2) 16%,transparent);color:var(--gold2);flex:none}
+.arcrow .nun{flex:1;min-width:0;display:flex;flex-direction:column}
+.arcgo{color:var(--mu)}
+.hmgrid{display:flex;flex-direction:column;gap:6px}
+.hmgrid .hm{justify-content:space-between;width:100%;opacity:.8}
+.hmgrid .hm.on{opacity:1;box-shadow:inset 0 0 0 1.5px var(--gold2,#e5b13a)}
+.hmgrid .hms{font-size:12px;font-weight:800;color:var(--mu)}
+.hmgrid .hm.on .hms{color:var(--gold2,#e5b13a)}
 </style>
 
 
@@ -1302,7 +1327,7 @@ html body.ot-celestial .ntbar2{--ntac:var(--gold2);background:rgba(11,19,38,.96)
   <div class="sbrand"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--gold2)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.400-5.700"/><path d="M20 4v5h-5"/></svg><span class="stxt">My tools</span></div>
   <nav class="snav">
     <button class="sitem on" data-act="app" data-app="life"><span class="sic" id="sicLife"></span><span class="stxt">Lifeloop</span></button>
-    <button class="sitem" data-act="app" data-app="trade"><span class="sic" id="sicTrade"></span><span class="stxt">TradeCycle</span></button>
+    <button class="sitem" data-act="app" data-app="drop"><span class="sic" id="sicDrop"></span><span class="stxt">Organic Dropshipping</span></button>
     <button class="sitem" data-act="app" data-app="cal"><span class="sic" id="sicCal"></span><span class="stxt">Calendar</span></button>
     <button class="sitem" data-act="app" data-app="gym"><span class="sic" id="sicGym"></span><span class="stxt">Gym</span></button>
     <button class="sitem" data-act="app" data-app="nutri"><span class="sic" id="sicNutri"></span><span class="stxt">Nutrition</span></button>
@@ -1358,6 +1383,7 @@ html body.ot-celestial .ntbar2{--ntac:var(--gold2);background:rgba(11,19,38,.96)
   </main>
 </div>
 <div id="appTrade" hidden></div>
+<div id="appDrop" hidden></div>
 <div id="appGym" hidden></div>
 <div id="appStudy" hidden></div>
 <div id="appTools" hidden></div>
@@ -2208,7 +2234,7 @@ function viewReview(){
 }
 
 /* ---------- TradeCycle ---------- */
-var app=['trade','gym','cal','study','tools','nutri','notes'].indexOf(lsGet('lifeloop.app'))>-1?lsGet('lifeloop.app'):'life';
+var app=['trade','drop','gym','cal','study','tools','nutri','notes'].indexOf(lsGet('lifeloop.app'))>-1?lsGet('lifeloop.app'):'life';
 var sideCol=lsGet('lifeloop.sidecol')==='1';
 var _n=new Date(),tY=_n.getFullYear(),tM=_n.getMonth();
 var tTab=lsGet('lifeloop.ttab')||'cal',tMode='daily',tRange=lsGet('lifeloop.trange')||'month';
@@ -2570,6 +2596,7 @@ function renderTrade(){
  var logged=!!tradeOn(today()),offNow=unit==='month'?(tY!==_n.getFullYear()||tM!==_n.getMonth()):unit==='year'?tY!==_n.getFullYear():false;
  function seg(items,cur2,act,key){return '<div class="seg si" data-k="'+key+'" role="tablist"><i class="segind"></i>'+items.map(function(i){return '<button class="'+(i[0]===cur2?'on':'')+'" data-act="'+act+'" data-'+key+'="'+i[0]+'" role="tab" aria-selected="'+(i[0]===cur2)+'">'+i[1]+'</button>'}).join('')+'</div>'}
  var h=secGreet(secSub('trade'))+'<header class="card thd"><button class="ib menubtn" data-act="menu" aria-label="Menu">'+I('menu',18)+'</button><div class="tbrand">'+TCICON+'<span>Trade<i class="gx">Cycle</i></span></div><div class="sp"></div><button class="ib syncbtn sy-off" data-act="syncbtn" hidden aria-label="Sync"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 18a4 4 0 0 1-.5-7.970A5.500 5.500 0 0 1 17 8.500 4.500 4.500 0 0 1 17.500 18z"/></svg><i></i></button><button class="ib" data-act="theme" aria-label="Switch light or dark theme">'+(isDark()?I('sun',17):I('moon',17))+'</button><button class="ib" data-act="settings" aria-label="Settings">'+I('sliders',17)+'</button></header>';
+ h+='<div class="arcbk"><button class="k sm" data-act="toarchive">'+I('left',14)+' Back to Archive</button></div>';
  h+='<section class="card tbar">'+seg([['cal','Calendar'],['chart','Chart'],['insights','Insights']],tTab,'ttab','t');
  if(unit!=='none')h+='<div class="tnav"><button class="ib" data-act="tnav" data-d="-1" aria-label="Previous"'+((unit==='month'&&tY===2026&&tM<=9)||(unit==='year'&&tY<=2026)?' disabled':'')+'>'+I('left',18)+'</button><button class="tlabel" data-act="tjumpd" title="Jump to a month or year">'+esc(label)+'</button><button class="ib" data-act="tnav" data-d="1" aria-label="Next">'+I('right',18)+'</button></div>';else h+='<div class="tnav"><span class="tlabel">'+(tTab==='journal'?'Every day':label)+'</span></div>';
  if(offNow)h+='<button class="k sm" data-act="ttoday">Today</button>';
@@ -2781,10 +2808,10 @@ var TIC={
  img:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.500"/><path d="M21 16l-5-5-9 9"/>',
  undo:'<path d="M9 14L4 9l5-5M4 9h10a6 6 0 010 12h-3"/>',
  redo:'<path d="M15 14l5-5-5-5M20 9H10a6 6 0 000 12h3"/>',
- trash:'<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',pl:'<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>'
+ trash:'<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',arc:'<rect x="3" y="4" width="18" height="5" rx="1.5"/><path d="M5 9v9a2 2 0 002 2h10a2 2 0 002-2V9M10 13h4"/>',pl:'<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>'
 };
 function TI(n,s){return '<svg viewBox="0 0 24 24" width="'+(s||22)+'" height="'+(s||22)+'" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+TIC[n]+'</svg>'}
-var TOOLLIST=[['wb','Whiteboard','Sketch, diagram and plan on an endless board'],['tm','Timer','Countdown and stopwatch'],['calc','Calculator','Quick sums with history'],['note','Notepad','A scratch page that saves itself'],['pl','Playlists','Chill and productive playlists, one tap']];
+var TOOLLIST=[['wb','Whiteboard','Sketch, diagram and plan on an endless board'],['tm','Timer','Countdown and stopwatch'],['calc','Calculator','Quick sums with history'],['note','Notepad','A scratch page that saves itself'],['pl','Playlists','Chill and productive playlists, one tap'],['arc','Archive','Old sections, kept safe and working']];
 var toolsTab='',toolsSig='';
 function toolsLeave(){if(wb)wbDestroy()}
 function renderTools(){
@@ -2797,7 +2824,7 @@ function renderTools(){
   h+='<div class="ttiles">'+TOOLLIST.map(function(x){return '<button class="ttile" data-act="tool" data-t="'+x[0]+'"><span class="tic">'+TI(x[0],28)+'</span><b>'+esc(x[1])+'</b><span>'+esc(x[2])+'</span></button>'}).join('')+'</div>';
  }else{
   h+='<div class="tback"><button class="k sm" data-act="toolback">'+I('left',14)+' All tools</button><h3>'+esc(cur[1])+'</h3></div>';
-  h+=toolsTab==='wb'?wbHtml():toolsTab==='tm'?tmHtml():toolsTab==='calc'?clHtml():toolsTab==='pl'?plHtml():npHtml();
+  h+=toolsTab==='wb'?wbHtml():toolsTab==='tm'?tmHtml():toolsTab==='calc'?clHtml():toolsTab==='pl'?plHtml():toolsTab==='arc'?arcHtml():npHtml();
  }
  el.innerHTML=h;
  if(toolsTab==='wb')wbInit();else if(toolsTab==='tm')tmDraw();else if(toolsTab==='calc')clInit();else if(toolsTab==='note')npInit();
@@ -4458,6 +4485,22 @@ function ntBarState(){
 document.addEventListener('keyup',function(){ntBarState()});document.addEventListener('pointerup',function(){setTimeout(ntBarState,0)});
 document.addEventListener('selectionchange',ntBarState);
 
+
+/* ================= Organic Dropshipping (placeholder), Archive, Hide mode ================= */
+var DROPICON='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4.500v9L12 21l-8-4.500v-9z"/><path d="M4 7.500l8 4.500 8-4.500M12 12v9"/></svg>';
+var DROPBRAND='<svg class="tlogo" viewBox="0 0 40 40" aria-hidden="true"><defs><linearGradient id="dpl" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#047857"/><stop offset=".5" stop-color="#10b981"/><stop offset="1" stop-color="#a7f3d0"/></linearGradient></defs><rect x="2" y="2" width="36" height="36" rx="11" fill="url(#dpl)" opacity=".2"/><path d="M20 9l9 5v10.500L20 30l-9-5.500V14z" fill="none" stroke="url(#dpl)" stroke-width="2.800" stroke-linejoin="round"/><path d="M11 14l9 5 9-5M20 19v11" fill="none" stroke="url(#dpl)" stroke-width="2.800" stroke-linecap="round" stroke-linejoin="round"/></svg><span><i class="gx">Organic Dropshipping</i></span>';
+function renderDrop(){
+ var el=$('#appDrop');if(!el||app!=='drop')return;
+ el.innerHTML=secHead(DROPBRAND,'drop')+'<section class="card dropph"><div class="dropico">'+DROPICON.replace('width="22" height="22"','width="44" height="44"')+'</div><h3>Organic Dropshipping</h3><p class="mu">Coming soon. This section is a placeholder for now.</p></section>';
+}
+function arcHtml(){
+ return '<section class="card arccard"><h3>Archived sections</h3><p class="mu">Sections you have moved out of the main menu. They keep all their data and still work.</p><button class="arcrow" data-act="app" data-app="trade"><span class="arcic">'+I('chartln',24)+'</span><span class="nun"><b>TradeCycle</b><span class="mu">Your trading journal, calendar and charts</span></span><span class="arcgo">'+I('right',16)+'</span></button></section>';
+}
+var HSECS=[['cal','Calendar'],['gym','Gym'],['nutri','Nutrition'],['study','Study'],['notes','Notes'],['tools','Tools (includes the Archive)'],['drop','Organic Dropshipping']];
+function hideModeHtml(){
+ return '<details class="sub"><summary>Hide mode</summary><div class="mu" style="font-size:12.5px;margin-bottom:8px">Choose which sections show in your menu. Hidden sections keep all their data and come back whenever you switch them on. Lifeloop always stays.</div><div class="hmgrid">'+HSECS.map(function(x){var off=!!(S.hide&&S.hide[x[0]]);return '<button class="k sm hm'+(off?'':' on')+'" data-dact="hide" data-s="'+x[0]+'"><span class="hmn">'+esc(x[1])+'</span><span class="hms">'+(off?'Hidden':'Shown')+'</span></button>'}).join('')+'</div></details>';
+}
+
 /* ================= Extras: bodyweight, charts, calculator, Today, review, backup, install, reminders ================= */
 function xLine(a,o){
  o=o||{};var W=o.w||320,H=o.h||150,pl=34,pr=10,pt=10,pb=22;
@@ -4624,23 +4667,23 @@ try{
 }catch(e){}
 
 function applyApp(){
- var map={life:'#appLife',trade:'#appTrade',gym:'#appGym',cal:'#appCal',study:'#appStudy',tools:'#appTools',nutri:'#appNutri',notes:'#appNotes'};
+ var map={life:'#appLife',trade:'#appTrade',drop:'#appDrop',gym:'#appGym',cal:'#appCal',study:'#appStudy',tools:'#appTools',nutri:'#appNutri',notes:'#appNotes'};
  Object.keys(map).forEach(function(a){document.body.classList.toggle('app-'+a,app===a);var c=$(map[a]);if(c)c.hidden=app!==a});
  document.body.classList.toggle('tpriv',tpriv&&app==='trade');
  var mm=$('#mtMenu');if(mm&&!mm.firstChild)mm.innerHTML=I('menu',20);
- var mt=$('#mtTitle');if(mt)mt.textContent={life:'Lifeloop',trade:'TradeCycle',gym:'Gym',cal:'Calendar',study:'Study',tools:'Tools',nutri:'Nutrition',notes:'Notes'}[app];
+ var mt=$('#mtTitle');if(mt)mt.textContent={life:'Lifeloop',trade:'TradeCycle',drop:'Organic Dropshipping',gym:'Gym',cal:'Calendar',study:'Study',tools:'Tools',nutri:'Nutrition',notes:'Notes'}[app];
 }
 function renderSide(){
  var s=$('#side');if(!s)return;
  s.classList.toggle('col',sideCol);
- [].forEach.call(s.querySelectorAll('[data-app]'),function(b){var on=b.dataset.app===app;b.classList.toggle('live',b.dataset.app==='study'&&!!S.sactive);b.classList.toggle('on',on);b.setAttribute('aria-current',on?'page':'false')});
+ [].forEach.call(s.querySelectorAll('[data-app]'),function(b){b.hidden=!!(S.hide&&S.hide[b.dataset.app]&&b.dataset.app!=='life');var on=b.dataset.app===app;b.classList.toggle('live',b.dataset.app==='study'&&!!S.sactive);b.classList.toggle('on',on);b.setAttribute('aria-current',on?'page':'false')});
  var cb=$('#sideCol');if(cb)cb.setAttribute('aria-label',sideCol?'Expand menu':'Collapse menu');
 }
 function setApp(a){
  if(typeof ntBar==='function'){ntFlush();ntBar(false)}
  app=a;lsSet('lifeloop.app',a);closeSide();renderAll();
  if(a==='life')moveInd();
- var ct=$({life:'#appLife',trade:'#appTrade',gym:'#appGym',cal:'#appCal',study:'#appStudy',tools:'#appTools',nutri:'#appNutri',notes:'#appNotes'}[a]);if(ct&&!REDUCE){ct.classList.remove('vin');void ct.offsetWidth;ct.classList.add('vin')}
+ var ct=$({life:'#appLife',trade:'#appTrade',drop:'#appDrop',gym:'#appGym',cal:'#appCal',study:'#appStudy',tools:'#appTools',nutri:'#appNutri',notes:'#appNotes'}[a]);if(ct&&!REDUCE){ct.classList.remove('vin');void ct.offsetWidth;ct.classList.add('vin')}
  if(a==='trade'){segPrev={};lastSig=null;renderTrade()}
  window.scrollTo(0,0);
 }
@@ -4696,6 +4739,7 @@ function secSub(a){
  if(a==='cal'){n=evOn(t0).length;return n?n+(n===1?' event':' events')+' today.':'Nothing on the calendar today.'}
  if(a==='study'){n=S.sitems.filter(function(x){return !x.done}).length;return n?n+' open '+(n===1?'deadline':'deadlines')+'. One step at a time.':'No open deadlines. Add one when it appears.'}
  if(a==='tools')return 'Handy things in one place.';
+ if(a==='drop')return 'Your organic store, in one place.';
  if(a==='notes'){var nn=S.npg.filter(function(x){return !x.tr&&!x.row}).length;return nn?nn+(nn===1?' page':' pages')+' in your notes.':'Your notes, lists and databases.'}
  if(a==='nutri'){var nt=nuDayTot(nuDay||today()),ns=nuSet();return Math.round(nt.k)+' of '+Math.round(ns.kcal)+' kcal'+(nuDay&&nuDay!==today()?' on '+nuDateLabel(nuDay).toLowerCase():' today')+'.'}
  if(a==='trade'){var t=tradeOn(t0);return t?'Today so far: '+money(t.pnl,{sign:true})+'.':'Log your day when you are done trading.'}
@@ -5329,7 +5373,7 @@ function applyFx(){
  if(b>0){st.setProperty('--calpha',(100-b*.55).toFixed(1)+'%');st.setProperty('--cblur',(b*.24).toFixed(1)+'px')}else{st.removeProperty('--calpha');st.removeProperty('--cblur')}
 }
 function applyBg(){applyTheme();applyFx();document.body.classList.toggle('bigbg',!!S.bigbg);var b=$('#btnBig');if(b){b.classList.toggle('on',!!S.bigbg);b.setAttribute('aria-pressed',!!S.bigbg)}}
-function renderAll(){if(!S.sampleGone){purgeSamples(S);S.sampleGone=1;save()}sFocusCheck();applyApp();renderSide();applyBg();if(app==='trade'){renderTrade();return}if(app==='gym'){renderGym();return}if(app==='study'){renderStudy();return}if(app==='tools'){renderTools();return}if(app==='nutri'){renderNutri();return}if(app==='notes'){renderNotes();return}if(app==='cal'){renderCal();return}rollover();renderGreet();renderHeader();renderTabs();renderView()}
+function renderAll(){if(S.hide&&S.hide[app]&&app!=='life'){app='life';lsSet('lifeloop.app','life')}if(!S.sampleGone){purgeSamples(S);S.sampleGone=1;save()}sFocusCheck();applyApp();renderSide();applyBg();if(app==='trade'){renderTrade();return}if(app==='gym'){renderGym();return}if(app==='study'){renderStudy();return}if(app==='tools'){renderTools();return}if(app==='nutri'){renderNutri();return}if(app==='notes'){renderNotes();return}if(app==='drop'){renderDrop();return}if(app==='cal'){renderCal();return}rollover();renderGreet();renderHeader();renderTabs();renderView()}
 
 /* ---------- dialog ---------- */
 function openDlg(html){var d=$('#dlg');d.innerHTML=html;$('#ov').hidden=false;var f=d.querySelector('input,select,textarea');if(f)f.focus()}
@@ -5419,7 +5463,7 @@ function openSettings(){
  var cal='<div class="lbl">Show on the calendar</div><div class="form"><button class="k sm'+(fg?' on':'')+'" data-dact="calg">Gym days: '+(fg?'On':'Off')+'</button><button class="k sm'+(fs?' on':'')+'" data-dact="cals">Study topics: '+(fs?'On':'Off')+'</button><button class="k sm'+(fa2?' on':'')+'" data-dact="calas">Assessments: '+(fa2?'On':'Off')+'</button><button class="k sm'+(fc2?' on':'')+'" data-dact="calcl">Classes: '+(fc2?'On':'Off')+'</button></div>';
  var gym='<div class="lbl">Weight unit</div><div class="form"><button class="k sm'+(unit()==='lb'?' on':'')+'" data-dact="ulb">Pounds (lb)</button><button class="k sm'+(unit()==='kg'?' on':'')+'" data-dact="ukg">Kilograms (kg)</button></div><div class="mu" style="font-size:12px">Your logged weights are kept safely and convert when you switch.</div>';
  var trade='<div class="fld"><label for="sCur">Currency symbol</label><input id="sCur" maxlength="3" value="'+esc(cur())+'"></div><div class="fld"><label for="sTgt">Monthly profit target, optional</label><input id="sTgt" type="number" inputmode="decimal" value="'+esc(S.tgt||'')+'"></div><div class="fld"><label for="sStart">Starting balance, optional (shows % return)</label><input id="sStart" type="number" inputmode="decimal" value="'+esc(S.start||'')+'"></div><div class="fld"><label for="sDll">Daily loss limit, optional (flags days that hit it)</label><input id="sDll" type="number" inputmode="decimal" value="'+esc(S.dll||'')+'"></div>';
- var gen='<div class="fld"><label for="sName">What should I call you?</label><input id="sName" value="'+esc(S.name||'')+'"></div><details class="sub"><summary>Appearance</summary><div class="lbl">Overall theme</div><div class="otgrid"><button class="otopt'+(S.otheme?'':' on')+'" data-dact="otheme" data-ot=""><div class="otprev"></div>Default</button><button class="otopt'+(S.otheme==='celestial'?' on':'')+'" data-dact="otheme" data-ot="celestial"><div class="otprev cel"></div>Celestial</button><button class="otopt'+(S.otheme==='synth'?' on':'')+'" data-dact="otheme" data-ot="synth"><div class="otprev syn"></div>Neon Grid</button><button class="otopt'+(S.otheme==='horizon'?' on':'')+'" data-dact="otheme" data-ot="horizon"><div class="otprev hor"></div>Deep Horizon</button></div><div class="otnote">Default uses the background and card themes below. The overall themes change the whole app and override them.</div><div class="lbl">Theme: carbon fibre backgrounds</div><div class="thgrid">'+THEMES.map(function(x){return '<button class="thopt'+((S.theme||'none')===x[0]?' on':'')+'" data-dact="theme" data-th="'+x[0]+'"><div class="thprev'+(x[0]==='none'?'':' th-carbon th-'+x[0])+'"></div>'+x[1]+'</button>'}).join('')+'</div><div class="lbl">Theme: card style</div><div class="thgrid">'+CARDTH.map(function(x){return '<button class="thopt'+((S.cardth||'none')===x[0]?' on':'')+'" data-dact="cardth" data-cs="'+x[0]+'"><div class="cpw"><div class="cprev'+(x[0]==='none'?'':' cs-'+x[0])+'"></div></div>'+x[1]+'</button>'}).join('')+'</div><div class="fxrow"><label for="fxGlow">Outer glow <b id="fxGv">'+fxVal('fxglow',25)+'%</b></label><input type="range" id="fxGlow" min="0" max="100" value="'+fxVal('fxglow',25)+'"></div><div class="fxrow"><label for="fxBlur">Background blur <b id="fxBv">'+fxVal('fxblur',0)+'%</b></label><input type="range" id="fxBlur" min="0" max="100" value="'+fxVal('fxblur',0)+'"></div><div class="mu" style="font-size:12px">Blur shows the background through the cards. It applies to Default, Frosted glass and Colour tint.</div></details><details class="sub"><summary>Reminders and app</summary>'+xSettingsHtml()+'</details><details class="sub"><summary>Sync and backup</summary><div class="mu" style="font-size:12px">'+syncText()+'</div>'+(BK?BK.settingsHtml():'')+snapHtml()+'<div class="lbl">Backup</div><div class="form">'+((window.claude&&window.claude.use)?'':'<button class="k sm" data-dact="dlfile">Download file</button><button class="k sm" data-dact="loadfile">Load file</button><input type="file" id="bkf" accept=".json,application/json" hidden>')+'<button class="k sm" data-dact="backup">Copy backup</button><button class="k sm" data-dact="restore">Restore from box</button></div><textarea id="bk" placeholder="Paste a backup here, then press Restore" aria-label="Backup text"></textarea></details>';
+ var gen='<div class="fld"><label for="sName">What should I call you?</label><input id="sName" value="'+esc(S.name||'')+'"></div>'+hideModeHtml()+'<details class="sub"><summary>Appearance</summary><div class="lbl">Overall theme</div><div class="otgrid"><button class="otopt'+(S.otheme?'':' on')+'" data-dact="otheme" data-ot=""><div class="otprev"></div>Default</button><button class="otopt'+(S.otheme==='celestial'?' on':'')+'" data-dact="otheme" data-ot="celestial"><div class="otprev cel"></div>Celestial</button><button class="otopt'+(S.otheme==='synth'?' on':'')+'" data-dact="otheme" data-ot="synth"><div class="otprev syn"></div>Neon Grid</button><button class="otopt'+(S.otheme==='horizon'?' on':'')+'" data-dact="otheme" data-ot="horizon"><div class="otprev hor"></div>Deep Horizon</button></div><div class="otnote">Default uses the background and card themes below. The overall themes change the whole app and override them.</div><div class="lbl">Theme: carbon fibre backgrounds</div><div class="thgrid">'+THEMES.map(function(x){return '<button class="thopt'+((S.theme||'none')===x[0]?' on':'')+'" data-dact="theme" data-th="'+x[0]+'"><div class="thprev'+(x[0]==='none'?'':' th-carbon th-'+x[0])+'"></div>'+x[1]+'</button>'}).join('')+'</div><div class="lbl">Theme: card style</div><div class="thgrid">'+CARDTH.map(function(x){return '<button class="thopt'+((S.cardth||'none')===x[0]?' on':'')+'" data-dact="cardth" data-cs="'+x[0]+'"><div class="cpw"><div class="cprev'+(x[0]==='none'?'':' cs-'+x[0])+'"></div></div>'+x[1]+'</button>'}).join('')+'</div><div class="fxrow"><label for="fxGlow">Outer glow <b id="fxGv">'+fxVal('fxglow',25)+'%</b></label><input type="range" id="fxGlow" min="0" max="100" value="'+fxVal('fxglow',25)+'"></div><div class="fxrow"><label for="fxBlur">Background blur <b id="fxBv">'+fxVal('fxblur',0)+'%</b></label><input type="range" id="fxBlur" min="0" max="100" value="'+fxVal('fxblur',0)+'"></div><div class="mu" style="font-size:12px">Blur shows the background through the cards. It applies to Default, Frosted glass and Colour tint.</div></details><details class="sub"><summary>Reminders and app</summary>'+xSettingsHtml()+'</details><details class="sub"><summary>Sync and backup</summary><div class="mu" style="font-size:12px">'+syncText()+'</div>'+(BK?BK.settingsHtml():'')+snapHtml()+'<div class="lbl">Backup</div><div class="form">'+((window.claude&&window.claude.use)?'':'<button class="k sm" data-dact="dlfile">Download file</button><button class="k sm" data-dact="loadfile">Load file</button><input type="file" id="bkf" accept=".json,application/json" hidden>')+'<button class="k sm" data-dact="backup">Copy backup</button><button class="k sm" data-dact="restore">Restore from box</button></div><textarea id="bk" placeholder="Paste a backup here, then press Restore" aria-label="Backup text"></textarea></details>';
  var h='<h3>Settings</h3>'+sec('gen','General','#9aa3b2',gen)+sec('life','Lifeloop','#e5b13a',life)+sec('cal','Calendar','#8b5cf6',cal)+sec('gym','Gym','#22d3ee',gym)+sec('study','Study','#f59e0b','<div class="lbl">Subject colours</div><div class="form">'+SMODS.map(function(m){applyModCols();return '<label class="k sm" style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="color" data-mc="'+m.id+'" value="'+m.c+'" style="width:26px;height:26px;padding:0;border:0;background:none">'+esc(m.s)+'</label>'}).join('')+'</div><div class="fld"><label for="sGoal">Weekly study goal (hours)</label><input id="sGoal" type="text" inputmode="decimal" value="'+esc(sGoal())+'"></div><div class="mu" style="font-size:12px">Press Save below to keep it.</div>')+sec('trade','TradeCycle','#aab4c2',trade)+
   '<div class="dact"><button class="k danger" data-dact="reset" id="btnReset">Erase everything</button><button class="k go" data-dact="areas">Save</button></div>';
  openDlg(h);$('#dlg').dataset.kind='settings';
@@ -5442,6 +5486,7 @@ function onClick(e){
    if(a==='otheme'){S.otheme=el.dataset.ot||'';save();applyBg();[].forEach.call(document.querySelectorAll('[data-dact=otheme]'),function(q){q.classList.toggle('on',q===el)});return}
    if(a==='cardth'){S.cardth=el.dataset.cs==='none'?'':el.dataset.cs;save();applyBg();[].forEach.call(document.querySelectorAll('[data-dact=cardth]'),function(q){q.classList.toggle('on',q===el)});return}
    if(a==='theme'){S.theme=el.dataset.th==='none'?'':el.dataset.th;save();applyBg();[].forEach.call(document.querySelectorAll('.thopt'),function(q){q.classList.toggle('on',q===el)});return}
+   if(a==='hide'){var hk=el.dataset.s;S.hide=S.hide||{};if(S.hide[hk])delete S.hide[hk];else S.hide[hk]=1;save();var hoff=!!S.hide[hk];el.classList.toggle('on',!hoff);var hs=el.querySelector('.hms');if(hs)hs.textContent=hoff?'Hidden':'Shown';renderSide();if(hoff&&app===hk)setApp('life');return}
    if(a==='bigbg'){S.bigbg=!S.bigbg;save();applyBg();el.classList.toggle('on',!!S.bigbg);el.textContent='Big backgrounds: '+(S.bigbg?'On':'Off');return}
    if(a==='snap'){var sn2=[];try{sn2=JSON.parse(lsGet('lifeloop.snaps')||'[]')}catch(e){}var it2=sn2[+el.dataset.i];if(!it2)return;
     if(!el.dataset.armed){el.dataset.armed='1';el.textContent='Tap again to restore';return}
@@ -5479,6 +5524,7 @@ function onClick(e){
   case 'app':setApp(el.dataset.app);break;
   case 'tool':toolsTab=el.dataset.t;renderTools();window.scrollTo(0,0);break;
   case 'toolback':toolsTab='';renderTools();window.scrollTo(0,0);break;
+  case 'toarchive':toolsTab='arc';toolsSig='';setApp('tools');break;
   case 'menu':toggleSide();break;
   case 'sidecol':sideCol=!sideCol;lsSet('lifeloop.sidecol',sideCol?'1':'0');renderSide();break;
   case 'theme':toggleTheme();break;
@@ -5670,7 +5716,7 @@ function setTheme(t){document.documentElement.setAttribute('data-theme',t);lsSet
 S=load();hashAll(false);
 var savedTheme=lsGet('lifeloop.theme');if(savedTheme==='light'||savedTheme==='dark')document.documentElement.setAttribute('data-theme',savedTheme);
 var savedTab=lsGet('lifeloop.tab');if(savedTab&&VIEWS[savedTab])tab=savedTab;
-$('#sicLife').innerHTML=I('life',22);$('#sicGym').innerHTML=I('gym',22);$('#sicCal').innerHTML=I('cal',22);$('#sicTrade').innerHTML=I('chartln',22);$('#sicStudy').innerHTML=I('study',22);$('#sicNutri').innerHTML=NUICON;$('#sicNotes').innerHTML=NTICON;$('#sicTools').innerHTML=TI('wb',22).replace('<svg ','<svg ').replace(/<svg[^>]*>.*<\/svg>/,'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="6.500" height="6.500" rx="2"/><rect x="13.500" y="4" width="6.500" height="6.500" rx="2"/><rect x="4" y="13.500" width="6.500" height="6.500" rx="2"/><rect x="13.500" y="13.500" width="6.500" height="6.500" rx="2"/></svg>');$('#sicCol').innerHTML=I('left',20);
+$('#sicLife').innerHTML=I('life',22);$('#sicGym').innerHTML=I('gym',22);$('#sicCal').innerHTML=I('cal',22);$('#sicDrop').innerHTML=DROPICON;$('#sicStudy').innerHTML=I('study',22);$('#sicNutri').innerHTML=NUICON;$('#sicNotes').innerHTML=NTICON;$('#sicTools').innerHTML=TI('wb',22).replace('<svg ','<svg ').replace(/<svg[^>]*>.*<\/svg>/,'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="6.500" height="6.500" rx="2"/><rect x="13.500" y="4" width="6.500" height="6.500" rx="2"/><rect x="4" y="13.500" width="6.500" height="6.500" rx="2"/><rect x="13.500" y="13.500" width="6.500" height="6.500" rx="2"/></svg>');$('#sicCol').innerHTML=I('left',20);
 document.addEventListener('input',function(e){if(e.target&&e.target.id==='jq'){jq=e.target.value;jLimit=40;var jl=$('#jlist');if(jl)jl.innerHTML=jList()}});
 document.addEventListener('touchstart',function(e){if(app!=='trade'||!e.touches[0])return;tsx=e.touches[0].clientX;tsy=e.touches[0].clientY},{passive:true});
 document.addEventListener('touchend',function(e){if(app!=='trade'||!e.target.closest||!e.target.closest('.tgrid,.tmonths,.twl')||!$('#ov').hidden)return;var t=e.changedTouches[0],dx=t.clientX-tsx,dy=t.clientY-tsy;if(Math.abs(dx)>70&&Math.abs(dy)<45)tNav(dx<0?1:-1)},{passive:true});
