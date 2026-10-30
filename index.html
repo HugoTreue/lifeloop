@@ -1587,6 +1587,7 @@ html body.bigbg .hrow .wm{right:auto;left:46%;width:84px;height:84px;opacity:.1}
 html body #bgl{position:fixed;inset:auto;top:0;left:0;width:100%;height:100vh;height:100lvh;min-height:100%;will-change:transform;backface-visibility:hidden}
 html{overscroll-behavior-y:none}
 body{overscroll-behavior-y:none}
+.hsteps{display:flex;flex-wrap:wrap;gap:4px;width:100%;margin-top:4px}.hs{font-size:11px;padding:1px 7px;border:1px solid currentColor;border-radius:99px;opacity:.6}.hs.on{opacity:1;border-color:var(--c)}
 </style>
 
 
@@ -2159,8 +2160,10 @@ function tasksBy(st){return S.tasks.filter(function(t){return t.status===st})}
 function todayList(){var l=tasksBy('today');return l.filter(function(t){return t.pri}).concat(l.filter(function(t){return !t.pri}))}
 function doneToday(){var d=today();return S.tasks.filter(function(t){return t.status==='done'&&t.doneAt&&ds(new Date(t.doneAt))===d})}
 function habitDone(h,d){return h.days.indexOf(d)>-1}
-function hTimes(h){return h.times>1?h.times:1}
+function hSteps(h){return Array.isArray(h.steps)?h.steps.filter(function(x){return x}):[]}
+function hTimes(h){var st=hSteps(h);if(st.length>1)return st.length;return h.times>1?h.times:1}
 function habitCount(h,d){return hTimes(h)>1?((h.n&&h.n[d])||0):(habitDone(h,d)?1:0)}
+function hStepsHtml(h,c){var st=hSteps(h);if(st.length<2)return '';return '<span class="hsteps">'+st.map(function(n,i){return '<span class="hs'+(i<c?' on':'')+'">'+(i<c?'✓ ':'')+esc(n)+'</span>'}).join('')+'</span>'}
 function daysBetween(a,b){var x=a.split('-'),y=b.split('-');return Math.round((Date.UTC(+y[0],+y[1]-1,+y[2])-Date.UTC(+x[0],+x[1]-1,+x[2]))/86400000)}
 function dueOn(h,d){
  if(h.weekly)return true;
@@ -2377,7 +2380,7 @@ function viewToday(){
    h+='<div class="sec"><div class="gh2"><span class="hb gold">'+(g[2]==='star'?'★':I(g[2],15))+'</span><span class="gt">'+g[1]+'</span><span class="cnt">'+dn2+'/'+hs.length+'</span><div class="bar thin"><i style="width:'+Math.round(100*dn2/hs.length)+'%"></i></div></div><div class="hchips">'+hs.map(function(x){
     var t=hTimes(x),c=habitCount(x,today()),on=habitDone(x,today()),st=streakOf(x),col=(areaOf(x.area)||{c:'#9fb3c8'}).c;
     var sub=t>1?' <small>'+c+'/'+t+'</small>':(x.weekly?' <small>'+weekCount(x)+'/'+x.weekly+' this week</small>':(st>1?' <small>'+st+' days</small>':''));
-    return '<button class="hchip'+(on?' on':'')+'" style="--c:'+col+'" data-act="hab" data-id="'+x.id+'" data-day="'+today()+'" aria-pressed="'+on+'"><span class="hb">'+(on?I('check',14):AI(iconFor(x.name,x.area),14))+'</span><span>'+(x.pri?'★ ':'')+esc(x.name)+'</span>'+sub+'<span class="wm">'+AI(iconFor(x.name,x.area),56)+'</span></button>';
+    return '<button class="hchip'+(on?' on':'')+'" style="--c:'+col+'" data-act="hab" data-id="'+x.id+'" data-day="'+today()+'" aria-pressed="'+on+'"><span class="hb">'+(on?I('check',14):AI(iconFor(x.name,x.area),14))+'</span><span>'+(x.pri?'★ ':'')+esc(x.name)+'</span>'+sub+hStepsHtml(x,c)+'<span class="wm">'+AI(iconFor(x.name,x.area),56)+'</span></button>';
    }).join('')+'</div></div>';
   });
  }
@@ -2444,7 +2447,7 @@ function hrowHtml(x,t,days,wd){
  var a=AREAS.filter(function(z){return z.id===x.area})[0]||AREAS[0];
  var st=streakOf(x),paused=st>0&&!habitDone(x,t)&&!habitDone(x,addDays(t,-1)),tt=hTimes(x),cc=habitCount(x,t);
  var prog=x.weekly?Math.round(100*Math.min(1,weekCount(x)/x.weekly)):(tt>1?Math.round(100*cc/tt):null);
- return '<div class="hrow" style="--c:'+a.c+'"><span class="wm">'+AI(iconFor(x.name,x.area),90)+'</span><span class="hb big">'+AI(iconFor(x.name,x.area),18)+'</span><div class="nm"><button class="tt" data-act="edit" data-kind="habit" data-id="'+x.id+'">'+esc(x.name)+'</button><div class="meta">'+(isUrgent(x)?'<span class="chip urg">Needed today</span>':'')+schedChip(x)+(x.weekly?'<span class="streak">'+weekCount(x)+'/'+x.weekly+' this week</span>':'<span class="streak">'+I('flame',13)+st+' day'+(st===1?'':'s')+(paused?' · paused':'')+'</span>')+'</div>'+(prog===null?'':'<div class="bar thin" style="margin-top:4px"><i style="width:'+prog+'%;background:var(--c)"></i></div>')+'</div>'+
+ return '<div class="hrow" style="--c:'+a.c+'"><span class="wm">'+AI(iconFor(x.name,x.area),90)+'</span><span class="hb big">'+AI(iconFor(x.name,x.area),18)+'</span><div class="nm"><button class="tt" data-act="edit" data-kind="habit" data-id="'+x.id+'">'+esc(x.name)+'</button>'+hStepsHtml(x,cc)+'<div class="meta">'+(isUrgent(x)?'<span class="chip urg">Needed today</span>':'')+schedChip(x)+(x.weekly?'<span class="streak">'+weekCount(x)+'/'+x.weekly+' this week</span>':'<span class="streak">'+I('flame',13)+st+' day'+(st===1?'':'s')+(paused?' · paused':'')+'</span>')+'</div>'+(prog===null?'':'<div class="bar thin" style="margin-top:4px"><i style="width:'+prog+'%;background:var(--c)"></i></div>')+'</div>'+
   '<button class="ib star'+(x.pri?' on':'')+'" data-act="star" data-kind="habit" data-id="'+x.id+'" aria-label="'+(x.pri?'Primary, tap to make secondary':'Make primary')+'" title="'+(x.pri?'Primary':'Make primary')+'">'+(x.pri?'★':'☆')+'</button>'+
   '<div class="days">'+days.map(function(d){var p=d.split('-'),w=wd[new Date(+p[0],+p[1]-1,+p[2]).getDay()];return '<button class="day'+(habitDone(x,d)?' on':'')+(!habitDone(x,d)&&habitCount(x,d)>0?' half':'')+(!dueOn(x,d)?' off':'')+(d===t?' today':'')+'" data-act="hab" data-id="'+x.id+'" data-day="'+d+'" aria-label="'+d+(habitDone(x,d)?', done':'')+'" aria-pressed="'+habitDone(x,d)+'">'+w+'<b></b></button>'}).join('')+'</div></div>';
 }
@@ -5926,6 +5929,7 @@ function openEdit(kind,id){
    '<div class="fld"><label for="eA">Area</label><select id="eA">'+areaOptions(o.area)+'</select></div>'+
    '<div class="fld"><label for="eP">Priority</label><select id="eP"><option value="0"'+(o.pri?'':' selected')+'>Secondary</option><option value="1"'+(o.pri?' selected':'')+'>Primary, shows first</option></select></div>'+
    '<div class="fld"><label for="eS">When in the day</label><select id="eS">'+sel('any',o.slot||'any','Through the day')+sel('am',o.slot||'any','Morning')+sel('pm',o.slot||'any','Evening')+'</select></div>'+
+   '<div class="fld"><label for="eSt">Steps, one per line (optional)</label><textarea id="eSt" rows="3" placeholder="Clean phone&#10;Clean laptop">'+esc(hSteps(o).join('\n'))+'</textarea></div>'+
    '<div class="fld"><label for="eN">Times per day</label><input id="eN" type="number" min="1" max="6" value="'+hTimes(o)+'"></div>'+
    '<div class="fld"><label for="eR">Repeats</label><select id="eR">'+sel('daily',cur,'Every day')+sel('every2',cur,'Every 2nd day')+sel('days',cur,'Specific days')+sel('weekly',cur,'A number of times a week')+'</select></div>'+
    '<div class="fld" id="fD"><label>Days, for Specific days</label><div class="fchips" id="eD">'+DN.map(function(n,i){return '<button type="button" class="fc'+((o.dow||[]).indexOf(i)>-1?' on':'')+'" data-act="wd" data-id="'+i+'">'+n+'</button>'}).join('')+'</div></div>'+
@@ -5963,7 +5967,7 @@ function dlgAction(a){
   if(kind==='task'){if(title)o.title=title;o.area=$('#eA').value||null;o.xp=+$('#eX').value;o.goalId=$('#eG').value||null;o.pri=$('#eP').value==='1'?1:0;
    var ev=S.log.filter(function(e){return e.ref==='t:'+id})[0];if(ev){ev.xp=o.xp;ev.area=o.area}}
   if(kind==='goal'){if(title)o.title=title;o.area=$('#eA').value;o.due=$('#eD').value||null}
-  if(kind==='habit'){if(title)o.name=title;o.area=$('#eA').value;o.slot=$('#eS').value;o.pri=$('#eP').value==='1'?1:0;o.times=Math.max(1,Math.min(6,parseInt($('#eN').value,10)||1));
+  if(kind==='habit'){if(title)o.name=title;o.area=$('#eA').value;o.slot=$('#eS').value;o.pri=$('#eP').value==='1'?1:0;o.times=Math.max(1,Math.min(6,parseInt($('#eN').value,10)||1));o.steps=($('#eSt').value||'').split('\n').map(function(v){return v.trim()}).filter(Boolean).slice(0,6);if(o.steps.length>1)o.times=o.steps.length;
    var rr=$('#eR').value;o.weekly=0;o.dow=null;o.every=1;
    if(rr==='weekly')o.weekly=Math.max(1,Math.min(7,parseInt($('#eW').value,10)||5));
    else if(rr==='days'){var dsel=[];document.querySelectorAll('#eD [data-wd], #eD .fc.on').forEach(function(b){});document.querySelectorAll('#eD .fc.on').forEach(function(b){dsel.push(+b.dataset.id)});o.dow=dsel.length?dsel:null}
