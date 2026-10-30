@@ -1588,6 +1588,18 @@ html body #bgl{position:fixed;inset:auto;top:0;left:0;width:100%;height:100vh;he
 html{overscroll-behavior-y:none}
 body{overscroll-behavior-y:none}
 .hsteps{display:flex;flex-wrap:wrap;gap:4px;width:100%;margin-top:4px}.hs{font-size:11px;padding:1px 7px;border:1px solid currentColor;border-radius:99px;opacity:.6}.hs.on{opacity:1;border-color:var(--c)}
+.rseg{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--bd);border-radius:99px;background:var(--bg2);margin:2px 0 12px}
+.rseg button{border:0;background:transparent;color:var(--mu);font:inherit;font-size:13px;padding:6px 16px;border-radius:99px;cursor:pointer;transition:background .15s,color .15s}
+.rseg button.on{background:var(--tabon,#fff);color:var(--ti,#111);box-shadow:0 0 0 1px rgba(232,194,106,.55)}
+.rsum{display:flex;align-items:center;gap:10px;margin:0 0 10px}.rsum b{font-size:15px}.rsum .bar{flex:1}
+.rrow{display:flex;align-items:flex-start;gap:12px;width:100%;text-align:left;border:1px solid var(--bd);background:var(--bg2);color:var(--fg);font:inherit;font-size:14px;padding:11px 13px;border-radius:12px;margin:6px 0;cursor:pointer;transition:border-color .15s,opacity .15s}
+.rrow:hover{border-color:rgba(232,194,106,.6)}
+.rrow .rck{flex:none;width:20px;height:20px;border-radius:50%;border:1.5px solid rgba(232,194,106,.8);display:grid;place-items:center;margin-top:1px;color:#111}
+.rrow.on{opacity:.6}.rrow.on .rck{background:#e8c26a;border-color:#e8c26a}.rrow.on .rtx{text-decoration:line-through}
+.rrow .rtx{flex:1;min-width:0;line-height:1.35}.rrow .rtx small{color:var(--mu)}
+.rinfo{display:flex;gap:10px;align-items:baseline;font-size:13px;color:var(--mu);padding:5px 4px 5px 10px;margin:4px 0;border-left:3px solid var(--c)}
+.rinfo .rtm{min-width:84px;color:var(--fg);font-variant-numeric:tabular-nums}
+.rtom{margin:8px 0 4px}.rmore{margin:6px 0}.rmore summary{cursor:pointer;color:var(--mu);font-size:13px;padding:6px 2px}
 </style>
 
 
@@ -2299,6 +2311,7 @@ function mood(done,total,hr){
 }
 var showAll=lsGet('lifeloop.showall')==='1';
 var hDue=lsGet('lifeloop.hdue')==='1';
+var rvMode=lsGet('lifeloop.rv')==='1';
 var skipped=(function(){try{var o=JSON.parse(lsGet('lifeloop.skip')||'{}');return o.d===today()&&Array.isArray(o.k)?o.k:[]}catch(e){return[]}})();
 function saveSkip(){lsSet('lifeloop.skip',JSON.stringify({d:today(),k:skipped}))}
 function dayStats(){
@@ -2360,6 +2373,8 @@ function viewToday(){
  var ptsToday=S.log.filter(function(e){return e.day===today()}).reduce(function(a,e){return a+e.xp},0);
  var CC=2*Math.PI*24,run=tmrEnd>Date.now();
  h+=nowCard();
+ h+=rvToggle();
+ if(rvMode)return h+routineHtml();
  h+='<button class="k showall" data-act="showall" aria-expanded="'+showAll+'">'+(showAll?'Hide the full list':'See everything for today ('+(list.length+S.habits.filter(function(x){return dueOn(x,today())}).length)+')')+'</button>';
  if(!showAll)return h+(doneToday().length?'<details class="sec"><summary>Already done today ('+doneToday().length+')</summary><div class="sec" style="margin-top:8px">'+doneToday().map(function(t){return taskRow(t)}).join('')+'</div></details>':'');
  h+='<div class="sec"><div class="sech"><span class="lbl">'+(S.quiet?'Just this one thing':'Your focus today')+'</span>'+(list.length?'<button class="k sm" data-act="clearfocus">Clear focus</button>':'')+'</div>';
@@ -4939,7 +4954,7 @@ function cvItems(day){
  var timed=[],all=[],P=plan(),pd=P[dkey(day)],fg=calF.indexOf('gym')>-1;
  evOn(day).forEach(function(e){var s=cvMin(e.time);if(s===null)all.push({t:e.title,col:'c-'+esc(e.col||'blue'),act:'cev',id:e.id});else timed.push({s:s,e:cvEnd(e,s),t:e.title,col:'c-'+esc(e.col||'blue'),act:'cev',id:e.id})});
  studyOn(day).forEach(function(q){
-  if(q.k==='c'){var s=cvMin(q.x.time);var t=q.m.n+(q.tp?' · '+sTopicShort(q.tp.t):'');if(s===null)all.push({t:'Class · '+t,c:q.c,act:'cstudy'});else timed.push({s:s,e:s+60,t:t,sub:'Class',c:q.c,act:'cstudy'})}
+  if(q.k==='c'){var s=cvMin(q.x.time);var t=q.m.n+(q.tp?' · '+sTopicShort(q.tp.t):'');if(s===null)all.push({t:'Class · '+t,c:q.c,act:'cstudy'});else timed.push({s:s,e:(function(en){return en!==null&&en>s?en:s+60})(cvMin(q.x.end)),t:t,sub:'Class',c:q.c,act:'cstudy'})}
   else all.push({t:(q.k==='a'?'Due: ':'Topic: ')+q.m.s+' · '+q.t,c:q.c,act:'cstudy',dn:q.x.done});
  });
  if(fg&&pd&&pd.ex.length){var lg=gymLogOf(day);all.push({t:'Gym · '+pd.name+(lg&&lg.fin?' ✓':''),col:'c-green',act:'gym'})}
@@ -5023,6 +5038,51 @@ document.addEventListener('click',function(e){
  else if(b.dataset.cvd){calD=b.dataset.cvd;calV='day';lsSet('lifeloop.cv','day');cvSync();renderCal()}
  else if(b.dataset.cvadd){openEvent(null,calD)}
 });
+
+/* ================= Routine view */
+var RGR=[['am','Wake up','sun'],['day','Through the day','clock'],['wind','Evening wind-down','moon'],['prep','Prep for tomorrow','star'],['rev','Review the day','check']];
+function rvGroup(h){if(h.rt)return h.rt;return h.slot==='am'?'am':h.slot==='pm'?'wind':'day'}
+function rvInfoRow(time,end,title,c){return '<div class="rinfo" style="--c:'+c+'"><span class="rtm">'+esc(time||'All day')+(end?'–'+esc(end):'')+'</span><span>'+esc(title)+'</span></div>'}
+function rvInfo(day,cls){
+ var o=[];
+ evOn(day).forEach(function(e){o.push({t:e.time||'',e:e.end,x:e.title,c:'#5ea0ff'})});
+ classesOn(day).forEach(function(q){var m=smod(q.mod);o.push({t:q.time||'',e:q.end,x:'Class · '+m.n,c:m.c})});
+ o.sort(function(a,b){return (a.t||'99')<(b.t||'99')?-1:1});
+ return o.map(function(i){return rvInfoRow(i.t,i.e,i.x,i.c)}).join('');
+}
+function rvRow(kind,x,t){
+ if(kind==='h'){
+  var on=habitDone(x,t),tt=hTimes(x),c=habitCount(x,t),ac=areaOf(x.area);
+  return '<button class="rrow'+(on?' on':'')+'" data-act="hab" data-id="'+x.id+'" data-day="'+t+'" aria-pressed="'+on+'"><span class="rck">'+(on?I('check',13):'')+'</span><span class="rtx">'+esc(x.name)+(tt>1&&!hSteps(x).length?' <small>'+c+'/'+tt+'</small>':'')+hStepsHtml(x,c)+'</span></button>';
+ }
+ var done=x.status==='done';
+ return '<button class="rrow task'+(done?' on':'')+'" data-act="toggle" data-id="'+x.id+'" aria-pressed="'+done+'"><span class="rck">'+(done?I('check',13):'')+'</span><span class="rtx">'+esc(x.title)+(x.pri?' <small>★</small>':'')+'</span></button>';
+}
+function routineHtml(){
+ var t=today(),tm=addDays(t,1),h='';
+ var dueH=S.habits.filter(function(x){return dueOn(x,t)});
+ var tk=S.tasks.filter(function(x){return x.status==='today'}).concat(doneToday());
+ var seen={};tk=tk.filter(function(x){if(seen[x.id])return false;seen[x.id]=1;return true});
+ var allN=0,allD=0;
+ RGR.forEach(function(g){
+  var hs=dueH.filter(function(x){return rvGroup(x)===g[0]}),ts=tk.filter(function(x){return (x.rt||'day')===g[0]});
+  var items=hs.map(function(x,i){return {k:'h',x:x,o:x.o||50,i:i}}).concat(ts.map(function(x,i){return {k:'t',x:x,o:x.o||(x.pri?60:90),i:100+i}}));
+  items.sort(function(a,b){return a.o-b.o||a.i-b.i});
+  var info=g[0]==='day'?rvInfo(t):'';
+  if(g[0]==='prep'){var ti=rvInfo(tm);if(ti)info='<div class="rtom"><span class="lbl">Tomorrow, '+new Date(tm+'T00:00:00').toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'short'})+'</span>'+ti+'</div>'}
+  if(!items.length&&!info)return;
+  var dn=items.filter(function(i){return i.k==='h'?habitDone(i.x,t):i.x.status==='done'}).length;allN+=items.length;allD+=dn;
+  var main=items,extra=[];
+  if(g[0]==='day'){main=items.filter(function(i){return i.k==='h'||i.x.pri||i.x.status==='done'});extra=items.filter(function(i){return !(i.k==='h'||i.x.pri||i.x.status==='done')})}
+  h+='<div class="sec rg"><div class="gh2"><span class="hb gold">'+(g[2]==='star'?'★':I(g[2],15))+'</span><span class="gt">'+g[1]+'</span><span class="cnt">'+dn+'/'+items.length+'</span><div class="bar thin"><i style="width:'+(items.length?Math.round(100*dn/items.length):0)+'%"></i></div></div>'+
+   (g[0]==='day'?info:'')+main.map(function(i){return rvRow(i.k,i.x,t)}).join('')+
+   (extra.length?'<details class="rmore"><summary>Other tasks for today ('+extra.length+')</summary>'+extra.map(function(i){return rvRow(i.k,i.x,t)}).join('')+'</details>':'')+
+   (g[0]==='prep'?info:'')+'</div>';
+ });
+ if(!h)h='<div class="empty">Nothing in your routine today.</div>';
+ return '<div class="rsum"><span class="lbl">Routine</span><b>'+allD+'/'+allN+'</b><div class="bar thin"><i style="width:'+(allN?Math.round(100*allD/allN):0)+'%"></i></div></div>'+h;
+}
+function rvToggle(){return '<div class="rseg" role="tablist"><button class="'+(rvMode?'':'on')+'" data-act="rv" data-v="0" role="tab" aria-selected="'+!rvMode+'">List</button><button class="'+(rvMode?'on':'')+'" data-act="rv" data-v="1" role="tab" aria-selected="'+rvMode+'">Routine</button></div>'}
 
 /* ================= Extras: bodyweight, charts, calculator, Today, review, backup, install, reminders ================= */
 function xLine(a,o){
@@ -5376,12 +5436,12 @@ function openSPlan(id,day,mod,topic){
 }
 function openSClass(id,day,mod){
  var x=id?S.sclass.filter(function(q){return q.id===id})[0]:null;if(id&&!x)return;
- openDlg('<h3>'+(x?'Edit class':'Add class')+'</h3><div class="fld"><label for="sM">Module</label>'+modSelect(x?x.mod:mod||SMODS[0].id)+'</div><div style="display:grid;grid-template-columns:1.3fr 1fr;gap:10px"><div class="fld"><label for="sDay">Day</label><input id="sDay" type="date" value="'+(x?x.day:day||today())+'"></div><div class="fld"><label for="sTm">Start time</label><input id="sTm" type="time" value="'+esc(x?x.time||'':'')+'"></div></div><div class="fld"><label for="sT">Note, optional</label><input id="sT" maxlength="60" value="'+esc(x?x.note||'':'')+'" placeholder="Room, lab, online"></div><div class="dact">'+(x?'<button class="k danger" data-dact="sdel">Delete</button>':'')+'<button class="k" data-dact="cancel">Cancel</button><button class="k go" data-dact="ssave">Save</button></div>');
+ openDlg('<h3>'+(x?'Edit class':'Add class')+'</h3><div class="fld"><label for="sM">Module</label>'+modSelect(x?x.mod:mod||SMODS[0].id)+'</div><div style="display:grid;grid-template-columns:1.3fr 1fr;gap:10px"><div class="fld"><label for="sDay">Day</label><input id="sDay" type="date" value="'+(x?x.day:day||today())+'"></div><div class="fld"><label for="sTm">Start time</label><input id="sTm" type="time" value="'+esc(x?x.time||'':'')+'"></div></div><div class="fld"><label for="sEn">End time</label><input id="sEn" type="time" value="'+esc(x?x.end||'':'')+'"></div><div class="fld"><label for="sT">Note, optional</label><input id="sT" maxlength="60" value="'+esc(x?x.note||'':'')+'" placeholder="Room, lab, online"></div><div class="dact">'+(x?'<button class="k danger" data-dact="sdel">Delete</button>':'')+'<button class="k" data-dact="cancel">Cancel</button><button class="k go" data-dact="ssave">Save</button></div>');
  var d=$('#dlg');d.dataset.kind='sclass';d.dataset.id=id||'';
 }
 function classRow(c){
  var m=smod(c.mod),tp=classTopic(c);
- return '<div class="srow" style="box-shadow:inset 4px 0 0 '+m.c+'"><span class="sk" style="'+mtint(m.c)+'">Class</span><button class="stt" data-act="sced" data-id="'+esc(c.id)+'">'+(c.time?'<span class="stm">'+esc(c.time)+'</span>':'')+'<span class="tx"><b>'+esc(m.s)+'</b>'+(tp?' · '+esc(sTopicShort(tp.t)):'')+(c.note?' · '+esc(c.note):'')+'</span></button></div>';
+ return '<div class="srow" style="box-shadow:inset 4px 0 0 '+m.c+'"><span class="sk" style="'+mtint(m.c)+'">Class</span><button class="stt" data-act="sced" data-id="'+esc(c.id)+'">'+(c.time?'<span class="stm">'+esc(c.time)+(c.end?'–'+esc(c.end):'')+'</span>':'')+'<span class="tx"><b>'+esc(m.s)+'</b>'+(tp?' · '+esc(sTopicShort(tp.t)):'')+(c.note?' · '+esc(c.note):'')+'</span></button></div>';
 }
 function openSTopic(id,mod){
  var x=id?S.stopics.filter(function(q){return q.id===id})[0]:null;if(id&&!x)return;
@@ -5747,7 +5807,7 @@ function secAct(a,d){
   var cid=d.dataset.id;
   if(a==='sdel'){sdelWith('sclass','Class removed');return}
   if(a==='ssave'){
-   var o6={mod:$('#sM').value,day:sday(),time:$('#sTm').value||'',note:($('#sT').value||'').trim().slice(0,60)},c6=cid?S.sclass.filter(function(x){return x.id===cid})[0]:null;
+   var o6={mod:$('#sM').value,day:sday(),time:$('#sTm').value||'',end:$('#sEn').value||'',note:($('#sT').value||'').trim().slice(0,60)},c6=cid?S.sclass.filter(function(x){return x.id===cid})[0]:null;
    if(c6)Object.assign(c6,o6);else S.sclass.push(Object.assign({id:'sc_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5)},o6));
    sSel=o6.day;save();closeDlg();renderAll();toast('Saved');
   }
@@ -6158,6 +6218,7 @@ function onClick(e){
   case 'skipnow':skipped.push(el.dataset.key);saveSkip();renderAll();break;
   case 'addreward':S.rewards.push({id:uid(),name:el.dataset.name,cost:+el.dataset.cost,ex:false});save();renderAll();toast('Reward added');break;
   case 'pick3':{var need=3-todayList().length;if(need<=0){toast('Today already has 3 or more');break}var cand=tasksBy('inbox').slice().sort(function(a,b){return (b.pri?1:0)-(a.pri?1:0)||a.created-b.created}).slice(0,need);cand.forEach(function(t){t.status='today';t.until=null});save();renderAll();toast(cand.length?cand.length+' moved to Today':'Inbox is empty');break}
+  case 'rv':rvMode=el.dataset.v==='1';lsSet('lifeloop.rv',rvMode?'1':'0');renderView();break;
   case 'hdue':hDue=!hDue;lsSet('lifeloop.hdue',hDue?'1':'0');renderView();break;
   case 'unskip':skipped=[];saveSkip();renderAll();break;
   case 'showall':showAll=!showAll;lsSet('lifeloop.showall',showAll?'1':'0');renderAll();break;
