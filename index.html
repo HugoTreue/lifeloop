@@ -1600,6 +1600,7 @@ body{overscroll-behavior-y:none}
 .rinfo{display:flex;gap:10px;align-items:baseline;font-size:13px;color:var(--mu);padding:5px 4px 5px 10px;margin:4px 0;border-left:3px solid var(--c)}
 .rinfo .rtm{min-width:84px;color:var(--fg);font-variant-numeric:tabular-nums}
 .rtom{margin:8px 0 4px}.rmore{margin:6px 0}.rmore summary{cursor:pointer;color:var(--mu);font-size:13px;padding:6px 2px}
+.rwin{font-size:12px;color:var(--mu);white-space:nowrap}
 </style>
 
 
@@ -5040,7 +5041,7 @@ document.addEventListener('click',function(e){
 });
 
 /* ================= Routine view */
-var RGR=[['am','Wake up','sun'],['day','Through the day','clock'],['wind','Evening wind-down','moon'],['prep','Prep for tomorrow','star'],['rev','Review the day','check']];
+var RGR=[['am','Wake up','sun','6am to 10am'],['day','Through the day','clock','10am to 7pm'],['wind','Evening wind-down','moon','7pm to midnight'],['prep','Prep for tomorrow','star','before bed'],['rev','Review the day','check','last thing']];
 function rvGroup(h){if(h.rt)return h.rt;return h.slot==='am'?'am':h.slot==='pm'?'wind':'day'}
 function rvInfoRow(time,end,title,c){return '<div class="rinfo" style="--c:'+c+'"><span class="rtm">'+esc(time||'All day')+(end?'–'+esc(end):'')+'</span><span>'+esc(title)+'</span></div>'}
 function rvInfo(day,cls){
@@ -5074,7 +5075,7 @@ function routineHtml(){
   var dn=items.filter(function(i){return i.k==='h'?habitDone(i.x,t):i.x.status==='done'}).length;allN+=items.length;allD+=dn;
   var main=items,extra=[];
   if(g[0]==='day'){main=items.filter(function(i){return i.k==='h'||i.x.pri||i.x.status==='done'});extra=items.filter(function(i){return !(i.k==='h'||i.x.pri||i.x.status==='done')})}
-  h+='<div class="sec rg"><div class="gh2"><span class="hb gold">'+(g[2]==='star'?'★':I(g[2],15))+'</span><span class="gt">'+g[1]+'</span><span class="cnt">'+dn+'/'+items.length+'</span><div class="bar thin"><i style="width:'+(items.length?Math.round(100*dn/items.length):0)+'%"></i></div></div>'+
+  h+='<div class="sec rg"><div class="gh2"><span class="hb gold">'+(g[2]==='star'?'★':I(g[2],15))+'</span><span class="gt">'+g[1]+'</span><span class="rwin">'+g[3]+'</span><span class="cnt">'+dn+'/'+items.length+'</span><div class="bar thin"><i style="width:'+(items.length?Math.round(100*dn/items.length):0)+'%"></i></div></div>'+
    (g[0]==='day'?info:'')+main.map(function(i){return rvRow(i.k,i.x,t)}).join('')+
    (extra.length?'<details class="rmore"><summary>Other tasks for today ('+extra.length+')</summary>'+extra.map(function(i){return rvRow(i.k,i.x,t)}).join('')+'</details>':'')+
    (g[0]==='prep'?info:'')+'</div>';
