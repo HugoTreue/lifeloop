@@ -2375,9 +2375,9 @@ function viewToday(){
  var ptsToday=S.log.filter(function(e){return e.day===today()}).reduce(function(a,e){return a+e.xp},0);
  var CC=2*Math.PI*24,run=tmrEnd>Date.now();
  h+=nowCard();
- if(rvMode)return h+routineHtml()+rvToggle();
+ if(rvMode)return h+routineHtml();
  h+='<button class="k showall" data-act="showall" aria-expanded="'+showAll+'">'+(showAll?'Hide the full list':'See everything for today ('+(list.length+S.habits.filter(function(x){return dueOn(x,today())}).length)+')')+'</button>';
- if(!showAll)return h+rvToggle()+(doneToday().length?'<details class="sec"><summary>Already done today ('+doneToday().length+')</summary><div class="sec" style="margin-top:8px">'+doneToday().map(function(t){return taskRow(t)}).join('')+'</div></details>':'');
+ if(!showAll)return h+(doneToday().length?'<details class="sec"><summary>Already done today ('+doneToday().length+')</summary><div class="sec" style="margin-top:8px">'+doneToday().map(function(t){return taskRow(t)}).join('')+'</div></details>':'');
  h+='<div class="sec"><div class="sech"><span class="lbl">'+(S.quiet?'Just this one thing':'Your focus today')+'</span>'+(list.length?'<button class="k sm" data-act="clearfocus">Clear focus</button>':'')+'</div>';
  if(focus.length){h+=focus.map(function(t,i){return taskRow(t,{big:true,pin:i>0,later:true,drag:true})}).join('')}
  else{
@@ -2411,7 +2411,7 @@ function viewToday(){
  }
  var dn=doneToday();
  if(dn.length&&!S.quiet)h+='<details class="sec"><summary>Already done today ('+dn.length+')</summary><div class="sec" style="margin-top:8px">'+dn.map(function(t){return taskRow(t)}).join('')+'</div></details>';
- return h+rvToggle();
+ return h;
 }
 
 function matches(t){return (!fArea||t.area===fArea)&&(!fq||t.title.toLowerCase().indexOf(fq)>-1)}
@@ -5161,7 +5161,7 @@ function todayOv(){
  rows.push(['study','Study',(nx?esc(nx.t.length>26?nx.t.slice(0,25)+'…':nx.t)+' · '+xCount(nx.due):'No deadlines')+(sm?' · '+fmtM(sm)+' today':''),Math.min(100,Math.round(sm/Math.max(30,Math.round(sGoal()*60/7))*100)),'#f59e0b']);
  var ev=evOn(t0);
  rows.push(['cal','Calendar',ev.length?ev.length+(ev.length===1?' event · ':' events · ')+esc(ev[0].title||ev[0].t||'')+(ev[0].time?' '+esc(ev[0].time):''):'Nothing scheduled',ev.length?100:0,'#8b5cf6']);
- el.innerHTML='<div class="tovh"><h3>Today</h3><button class="k sm" data-act="wreview">Weekly review</button></div>'+upNext()+rows.map(function(r){return '<button class="tovr" data-act="app" data-app="'+r[0]+'"><i style="background:'+r[4]+'"></i><span class="tovl">'+r[1]+'</span><span class="tovt">'+r[2]+'</span><span class="tovb"><b style="width:'+r[3]+'%;background:'+r[4]+'"></b></span></button>'}).join('');
+ el.innerHTML='<div class="tovh"><h3>Today</h3><button class="k sm" data-act="wreview">Weekly review</button></div>'+upNext()+rows.map(function(r){return '<button class="tovr" data-act="app" data-app="'+r[0]+'"><i style="background:'+r[4]+'"></i><span class="tovl">'+r[1]+'</span><span class="tovt">'+r[2]+'</span><span class="tovb"><b style="width:'+r[3]+'%;background:'+r[4]+'"></b></span></button>'}).join('')+rvToggle();
 }
 /* ----- weekly review ----- */
 function weeklyReview(){
@@ -6220,7 +6220,7 @@ function onClick(e){
   case 'skipnow':skipped.push(el.dataset.key);saveSkip();renderAll();break;
   case 'addreward':S.rewards.push({id:uid(),name:el.dataset.name,cost:+el.dataset.cost,ex:false});save();renderAll();toast('Reward added');break;
   case 'pick3':{var need=3-todayList().length;if(need<=0){toast('Today already has 3 or more');break}var cand=tasksBy('inbox').slice().sort(function(a,b){return (b.pri?1:0)-(a.pri?1:0)||a.created-b.created}).slice(0,need);cand.forEach(function(t){t.status='today';t.until=null});save();renderAll();toast(cand.length?cand.length+' moved to Today':'Inbox is empty');break}
-  case 'rv':rvMode=el.dataset.v==='1';lsSet('lifeloop.rv',rvMode?'1':'0');renderView();break;
+  case 'rv':rvMode=el.dataset.v==='1';lsSet('lifeloop.rv',rvMode?'1':'0');renderView();todayOv();break;
   case 'hdue':hDue=!hDue;lsSet('lifeloop.hdue',hDue?'1':'0');renderView();break;
   case 'unskip':skipped=[];saveSkip();renderAll();break;
   case 'showall':showAll=!showAll;lsSet('lifeloop.showall',showAll?'1':'0');renderAll();break;
