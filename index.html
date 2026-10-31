@@ -1602,12 +1602,20 @@ body{overscroll-behavior-y:none}
 .rtom{margin:8px 0 4px}.rmore{margin:6px 0}.rmore summary{cursor:pointer;color:var(--mu);font-size:13px;padding:6px 2px}
 .rwin{font-size:12px;color:var(--mu);white-space:nowrap}
 body.rvon #tabs{display:none}.rseg{margin:14px 0 4px}
-.uxbar span{white-space:nowrap}.uxbar>*{flex:none}.uxbar{border-radius:18px}@media(max-width:900px){.uxbar{top:auto;bottom:calc(78px + env(safe-area-inset-bottom,0px))}}
+.uxbar span{white-space:nowrap}.uxbar>*{flex:none}.uxbar{border-radius:18px}@media(max-width:900px){.uxbar{top:auto;bottom:calc(136px + env(safe-area-inset-bottom,0px))}}
 html body .rseg{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%;max-width:none;padding:4px;margin:14px 0 2px;border:1px solid var(--bd);border-radius:14px;background:var(--bg2);box-shadow:none}
 html body .rseg button{all:unset;box-sizing:border-box;display:flex;align-items:center;justify-content:center;height:38px;padding:0 14px;border-radius:10px;font:inherit;font-size:13.5px;font-weight:600;color:var(--mu);cursor:pointer;text-align:center;transition:background .18s,color .18s,box-shadow .18s}
 html body .rseg button:hover{color:var(--fg)}
 html body .rseg button.on{background:color-mix(in srgb,var(--gold2,#e8c26a) 24%,transparent);color:var(--ti);box-shadow:inset 0 0 0 1px var(--gold2,#e8c26a)}
 html body .rseg button:focus-visible{outline:2px solid var(--gold2,#e8c26a);outline-offset:1px}
+html body .rseg{position:relative}
+html body .rseg::before{content:"";position:absolute;top:4px;bottom:4px;left:4px;width:calc(50% - 6px);border-radius:10px;background:color-mix(in srgb,var(--gold2,#e8c26a) 24%,transparent);box-shadow:inset 0 0 0 1px var(--gold2,#e8c26a);transition:transform .28s cubic-bezier(.3,.8,.25,1)}
+html body .rseg[data-v="1"]::before{transform:translateX(calc(100% + 4px))}
+html body .rseg button{position:relative;z-index:1}
+html body .rseg button.on{background:transparent;box-shadow:none}
+html body .uxbar{gap:12px;padding:8px 8px 8px 16px;border-radius:16px;font-weight:600}
+html body .uxbar .k{height:34px;padding:0 16px;border-radius:10px}
+html body .uxbar .ib{width:34px;height:34px;min-width:0;padding:0;border-radius:10px;display:grid;place-items:center;font-size:14px;line-height:1;border:1px solid var(--bd);background:var(--bg2);color:var(--mu)}
 </style>
 
 
@@ -5089,7 +5097,7 @@ function routineHtml(){
  if(!h)h='<div class="empty">Nothing in your routine today.</div>';
  return '<div class="rsum"><span class="lbl">Routine</span><b>'+allD+'/'+allN+'</b><div class="bar thin"><i style="width:'+(allN?Math.round(100*allD/allN):0)+'%"></i></div></div>'+h;
 }
-function rvToggle(){return '<div class="rseg" role="tablist"><button class="'+(rvMode?'':'on')+'" data-act="rv" data-v="0" role="tab" aria-selected="'+!rvMode+'">List</button><button class="'+(rvMode?'on':'')+'" data-act="rv" data-v="1" role="tab" aria-selected="'+rvMode+'">Routine</button></div>'}
+function rvToggle(){return '<div class="rseg" data-v="'+(rvMode?1:0)+'" role="tablist"><button class="'+(rvMode?'':'on')+'" data-act="rv" data-v="0" role="tab" aria-selected="'+!rvMode+'">List</button><button class="'+(rvMode?'on':'')+'" data-act="rv" data-v="1" role="tab" aria-selected="'+rvMode+'">Routine</button></div>'}
 
 /* ================= Extras: bodyweight, charts, calculator, Today, review, backup, install, reminders ================= */
 function xLine(a,o){
@@ -6226,7 +6234,7 @@ function onClick(e){
   case 'skipnow':skipped.push(el.dataset.key);saveSkip();renderAll();break;
   case 'addreward':S.rewards.push({id:uid(),name:el.dataset.name,cost:+el.dataset.cost,ex:false});save();renderAll();toast('Reward added');break;
   case 'pick3':{var need=3-todayList().length;if(need<=0){toast('Today already has 3 or more');break}var cand=tasksBy('inbox').slice().sort(function(a,b){return (b.pri?1:0)-(a.pri?1:0)||a.created-b.created}).slice(0,need);cand.forEach(function(t){t.status='today';t.until=null});save();renderAll();toast(cand.length?cand.length+' moved to Today':'Inbox is empty');break}
-  case 'rv':rvMode=el.dataset.v==='1';lsSet('lifeloop.rv',rvMode?'1':'0');renderView();todayOv();break;
+  case 'rv':{var nv=el.dataset.v==='1';if(nv===rvMode)break;var sg=el.closest('.rseg');if(sg){sg.dataset.v=nv?1:0;sg.querySelectorAll('button').forEach(function(b){b.classList.toggle('on',b===el)})}setTimeout(function(){rvMode=nv;lsSet('lifeloop.rv',rvMode?'1':'0');renderView();todayOv()},sg?260:0);break}
   case 'hdue':hDue=!hDue;lsSet('lifeloop.hdue',hDue?'1':'0');renderView();break;
   case 'unskip':skipped=[];saveSkip();renderAll();break;
   case 'showall':showAll=!showAll;lsSet('lifeloop.showall',showAll?'1':'0');renderAll();break;
