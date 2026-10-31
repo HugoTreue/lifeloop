@@ -1602,6 +1602,7 @@ body{overscroll-behavior-y:none}
 .rtom{margin:8px 0 4px}.rmore{margin:6px 0}.rmore summary{cursor:pointer;color:var(--mu);font-size:13px;padding:6px 2px}
 .rwin{font-size:12px;color:var(--mu);white-space:nowrap}
 body.rvon #tabs{display:none}.rseg{margin:14px 0 4px}
+.uxbar span{white-space:nowrap}.uxbar>*{flex:none}.uxbar{border-radius:18px}@media(max-width:900px){.uxbar{top:auto;bottom:calc(78px + env(safe-area-inset-bottom,0px))}}
 </style>
 
 
@@ -1612,7 +1613,7 @@ body.rvon #tabs{display:none}.rseg{margin:14px 0 4px}
   <div class="sbrand"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--gold2)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.400-5.700"/><path d="M20 4v5h-5"/></svg><span class="stxt">My tools</span></div>
   <nav class="snav">
     <button class="sitem on" data-act="app" data-app="life"><span class="sic" id="sicLife"></span><span class="stxt">Lifeloop</span></button>
-    <button class="sitem" data-act="app" data-app="drop"><span class="sic" id="sicDrop"></span><span class="stxt">Organic Dropshipping</span></button>
+    <button class="sitem" data-act="app" data-app="drop"><span class="sic" id="sicDrop"></span><span class="stxt">SMMA</span></button>
     <button class="sitem" data-act="app" data-app="cal"><span class="sic" id="sicCal"></span><span class="stxt">Calendar</span></button>
     <button class="sitem" data-act="app" data-app="gym"><span class="sic" id="sicGym"></span><span class="stxt">Gym</span></button>
     <button class="sitem" data-act="app" data-app="nutri"><span class="sic" id="sicNutri"></span><span class="stxt">Nutrition</span></button>
@@ -4784,17 +4785,17 @@ document.addEventListener('keyup',function(){ntBarState()});document.addEventLis
 document.addEventListener('selectionchange',ntBarState);
 
 
-/* ================= Organic Dropshipping (placeholder), Archive, Hide mode ================= */
+/* ================= SMMA (placeholder), Archive, Hide mode ================= */
 var DROPICON='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4.500v9L12 21l-8-4.500v-9z"/><path d="M4 7.500l8 4.500 8-4.500M12 12v9"/></svg>';
-var DROPBRAND='<svg class="tlogo" viewBox="0 0 40 40" aria-hidden="true"><defs><linearGradient id="dpl" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#047857"/><stop offset=".5" stop-color="#10b981"/><stop offset="1" stop-color="#a7f3d0"/></linearGradient></defs><rect x="2" y="2" width="36" height="36" rx="11" fill="url(#dpl)" opacity=".2"/><path d="M20 9l9 5v10.500L20 30l-9-5.500V14z" fill="none" stroke="url(#dpl)" stroke-width="2.800" stroke-linejoin="round"/><path d="M11 14l9 5 9-5M20 19v11" fill="none" stroke="url(#dpl)" stroke-width="2.800" stroke-linecap="round" stroke-linejoin="round"/></svg><span><i class="gx">Organic Dropshipping</i></span>';
+var DROPBRAND='<svg class="tlogo" viewBox="0 0 40 40" aria-hidden="true"><defs><linearGradient id="dpl" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#047857"/><stop offset=".5" stop-color="#10b981"/><stop offset="1" stop-color="#a7f3d0"/></linearGradient></defs><rect x="2" y="2" width="36" height="36" rx="11" fill="url(#dpl)" opacity=".2"/><path d="M20 9l9 5v10.500L20 30l-9-5.500V14z" fill="none" stroke="url(#dpl)" stroke-width="2.800" stroke-linejoin="round"/><path d="M11 14l9 5 9-5M20 19v11" fill="none" stroke="url(#dpl)" stroke-width="2.800" stroke-linecap="round" stroke-linejoin="round"/></svg><span><i class="gx">SMMA</i></span>';
 function renderDrop(){
  var el=$('#appDrop');if(!el||app!=='drop')return;
- el.innerHTML=secHead(DROPBRAND,'drop')+'<section class="card dropph"><div class="dropico">'+DROPICON.replace('width="22" height="22"','width="44" height="44"')+'</div><h3>Organic Dropshipping</h3><p class="mu">Coming soon. This section is a placeholder for now.</p></section>';
+ el.innerHTML=secHead(DROPBRAND,'drop')+'<section class="card dropph"><div class="dropico">'+DROPICON.replace('width="22" height="22"','width="44" height="44"')+'</div><h3>SMMA</h3><p class="mu">Coming soon. This section is a placeholder for now.</p></section>';
 }
 function arcHtml(){
  return '<section class="card arccard"><h3>Archived sections</h3><p class="mu">Sections you have moved out of the main menu. They keep all their data and still work.</p><button class="arcrow" data-act="app" data-app="trade"><span class="arcic">'+I('chartln',24)+'</span><span class="nun"><b>TradeCycle</b><span class="mu">Your trading journal, calendar and charts</span></span><span class="arcgo">'+I('right',16)+'</span></button></section>';
 }
-var HSECS=[['cal','Calendar'],['gym','Gym'],['nutri','Nutrition'],['study','Study'],['notes','Notes'],['tools','Tools (includes the Archive)'],['drop','Organic Dropshipping']];
+var HSECS=[['cal','Calendar'],['gym','Gym'],['nutri','Nutrition'],['study','Study'],['notes','Notes'],['tools','Tools (includes the Archive)'],['drop','SMMA']];
 function hideModeHtml(){
  return '<details class="sub"><summary>Hide mode</summary><div class="mu" style="font-size:12.5px;margin-bottom:8px">Choose which sections show in your menu. Hidden sections keep all their data and come back whenever you switch them on. Lifeloop always stays.</div><div class="hmgrid">'+HSECS.map(function(x){var off=!!(S.hide&&S.hide[x[0]]);return '<button class="k sm hm'+(off?'':' on')+'" data-dact="hide" data-s="'+x[0]+'"><span class="hmn">'+esc(x[1])+'</span><span class="hms">'+(off?'Hidden':'Shown')+'</span></button>'}).join('')+'</div></details>';
 }
@@ -4803,7 +4804,7 @@ function hideModeHtml(){
 var UXH=lsGet('lifeloop.hap')!=='0';
 function hap(p){if(UXH&&navigator.vibrate){try{navigator.vibrate(p||12)}catch(e){}}}
 (function(){var cf=confetti;confetti=function(el){hap([14,40,14]);return cf(el)}})();
-var CMDAPPS=[['life','Lifeloop'],['cal','Calendar'],['gym','Gym'],['nutri','Nutrition'],['study','Study'],['notes','Notes'],['tools','Tools'],['drop','Organic Dropshipping']];
+var CMDAPPS=[['life','Lifeloop'],['cal','Calendar'],['gym','Gym'],['nutri','Nutrition'],['study','Study'],['notes','Notes'],['tools','Tools'],['drop','SMMA']];
 var cmdList=[],cmdSel=0;
 function uxTyping(){var t=((document.activeElement||{}).tagName||'');return /INPUT|TEXTAREA|SELECT/.test(t)||!!(document.activeElement&&document.activeElement.isContentEditable)}
 function cmdAddWater(){nuRecW(today(),function(r){r.water=(+r.water||0)+1});hap(10);toast('Water +1');if(app==='nutri')renderNutri();else todayOv()}
@@ -4862,7 +4863,7 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
 function bnavSync(){
  var n=$('#bnav');if(!n)return;
  var mth=$('#mtTheme');if(mth)mth.innerHTML=isDark()?I('sun',17):I('moon',17);var mbg=$('#mtBig');if(mbg){mbg.classList.toggle('on',!!S.bigbg);mbg.setAttribute('aria-pressed',!!S.bigbg)}
- var items=[['life','Home','sicLife'],['drop','Dropship','sicDrop'],['cal','Calendar','sicCal'],['gym','Gym','sicGym'],['nutri','Food','sicNutri'],['study','Study','sicStudy'],['notes','Notes','sicNotes'],['tools','Tools','sicTools']].filter(function(a){return !(S.hide&&S.hide[a[0]]&&a[0]!=='life')});
+ var items=[['life','Home','sicLife'],['drop','SMMA','sicDrop'],['cal','Calendar','sicCal'],['gym','Gym','sicGym'],['nutri','Food','sicNutri'],['study','Study','sicStudy'],['notes','Notes','sicNotes'],['tools','Tools','sicTools']].filter(function(a){return !(S.hide&&S.hide[a[0]]&&a[0]!=='life')});
  n.innerHTML=items.map(function(a){var ic=$('#'+a[2]);return '<button data-act="app" data-app="'+a[0]+'"'+(app===a[0]?' class="on" aria-current="page"':'')+'><span class="bic">'+(ic?ic.innerHTML:'')+'</span><span>'+a[1]+'</span></button>'}).join('');var on=n.querySelector('.on');if(on&&n.scrollTo){n.scrollTo({left:on.offsetLeft-(n.clientWidth-on.offsetWidth)/2,behavior:n.dataset.did?'smooth':'auto'});n.dataset.did=1}
 }
 (function(){var rs=renderSide;renderSide=function(){rs();bnavSync()}})();
@@ -5255,7 +5256,7 @@ function applyApp(){
  Object.keys(map).forEach(function(a){document.body.classList.toggle('app-'+a,app===a);var c=$(map[a]);if(c)c.hidden=app!==a});
  document.body.classList.toggle('tpriv',tpriv&&app==='trade');
  var mm=$('#mtMenu');if(mm&&!mm.firstChild)mm.innerHTML=I('menu',20);
- var mt=$('#mtTitle');if(mt)mt.textContent={life:'Lifeloop',trade:'TradeCycle',drop:'Dropshipping',gym:'Gym',cal:'Calendar',study:'Study',tools:'Tools',nutri:'Nutrition',notes:'Notes'}[app];
+ var mt=$('#mtTitle');if(mt)mt.textContent={life:'Lifeloop',trade:'TradeCycle',drop:'SMMA',gym:'Gym',cal:'Calendar',study:'Study',tools:'Tools',nutri:'Nutrition',notes:'Notes'}[app];
 }
 function renderSide(){
  var s=$('#side');if(!s)return;
