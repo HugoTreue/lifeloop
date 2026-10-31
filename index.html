@@ -2374,8 +2374,8 @@ function viewToday(){
  var hr=d.getHours(),greet=(hr<5?'Still up':hr<12?'Good morning':hr<18?'Good afternoon':'Good evening')+(S.name?', '+esc(S.name):'');
  var ptsToday=S.log.filter(function(e){return e.day===today()}).reduce(function(a,e){return a+e.xp},0);
  var CC=2*Math.PI*24,run=tmrEnd>Date.now();
- h+=nowCard();
  if(rvMode)return h+routineHtml();
+ h+=nowCard();
  h+='<button class="k showall" data-act="showall" aria-expanded="'+showAll+'">'+(showAll?'Hide the full list':'See everything for today ('+(list.length+S.habits.filter(function(x){return dueOn(x,today())}).length)+')')+'</button>';
  if(!showAll)return h+(doneToday().length?'<details class="sec"><summary>Already done today ('+doneToday().length+')</summary><div class="sec" style="margin-top:8px">'+doneToday().map(function(t){return taskRow(t)}).join('')+'</div></details>':'');
  h+='<div class="sec"><div class="sech"><span class="lbl">'+(S.quiet?'Just this one thing':'Your focus today')+'</span>'+(list.length?'<button class="k sm" data-act="clearfocus">Clear focus</button>':'')+'</div>';
