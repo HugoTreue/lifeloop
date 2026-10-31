@@ -1616,6 +1616,7 @@ html body .rseg button.on{background:transparent;box-shadow:none}
 html body .uxbar{gap:12px;padding:8px 8px 8px 16px;border-radius:16px;font-weight:600}
 html body .uxbar .k{height:34px;padding:0 16px;border-radius:10px}
 html body .uxbar .ib{width:34px;height:34px;min-width:0;padding:0;border-radius:10px;display:grid;place-items:center;font-size:14px;line-height:1;border:1px solid var(--bd);background:var(--bg2);color:var(--mu)}
+.rrow{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}.rrow.rdrag{opacity:.25}.rghost{background:var(--bg) !important;border-color:var(--gold2,#e8c26a) !important;box-shadow:0 14px 34px rgba(0,0,0,.55);transform:scale(1.02);opacity:.97}body.rdragging{cursor:grabbing}
 </style>
 
 
@@ -5089,7 +5090,7 @@ function routineHtml(){
   var dn=items.filter(function(i){return i.k==='h'?habitDone(i.x,t):i.x.status==='done'}).length;allN+=items.length;allD+=dn;
   var main=items,extra=[];
   if(g[0]==='day'){main=items.filter(function(i){return i.k==='h'||i.x.pri||i.x.status==='done'});extra=items.filter(function(i){return !(i.k==='h'||i.x.pri||i.x.status==='done')})}
-  h+='<div class="sec rg"><div class="gh2"><span class="hb gold">'+(g[2]==='star'?'★':I(g[2],15))+'</span><span class="gt">'+g[1]+'</span><span class="rwin">'+g[3]+'</span><span class="cnt">'+dn+'/'+items.length+'</span><div class="bar thin"><i style="width:'+(items.length?Math.round(100*dn/items.length):0)+'%"></i></div></div>'+
+  h+='<div class="sec rg" data-g="'+g[0]+'"><div class="gh2"><span class="hb gold">'+(g[2]==='star'?'★':I(g[2],15))+'</span><span class="gt">'+g[1]+'</span><span class="rwin">'+g[3]+'</span><span class="cnt">'+dn+'/'+items.length+'</span><div class="bar thin"><i style="width:'+(items.length?Math.round(100*dn/items.length):0)+'%"></i></div></div>'+
    (g[0]==='day'?info:'')+main.map(function(i){return rvRow(i.k,i.x,t)}).join('')+
    (extra.length?'<details class="rmore"><summary>Other tasks for today ('+extra.length+')</summary>'+extra.map(function(i){return rvRow(i.k,i.x,t)}).join('')+'</details>':'')+
    (g[0]==='prep'?info:'')+'</div>';
@@ -5099,6 +5100,63 @@ function routineHtml(){
 }
 function rvToggle(){return '<div class="rseg" data-v="'+(rvMode?1:0)+'" role="tablist"><button class="'+(rvMode?'':'on')+'" data-act="rv" data-v="0" role="tab" aria-selected="'+!rvMode+'">List</button><button class="'+(rvMode?'on':'')+'" data-act="rv" data-v="1" role="tab" aria-selected="'+rvMode+'">Routine</button></div>'}
 
+
+/* routine: long-press to drag and reorder */
+(function(){
+ var T=null,D=null,sx=0,sy=0,swallow=false,auto=null,lastY=0;
+ function rows(g){return Array.prototype.slice.call(g.querySelectorAll('.rrow'))}
+ function cancel(){if(T){clearTimeout(T);T=null}}
+ function start(row,x,y){
+  var r=row.getBoundingClientRect(),gh=row.cloneNode(true);
+  gh.className+=' rghost';gh.style.cssText='position:fixed;left:'+r.left+'px;top:'+r.top+'px;width:'+r.width+'px;z-index:99980;pointer-events:none;margin:0';
+  document.body.appendChild(gh);row.classList.add('rdrag');document.body.classList.add('rdragging');
+  D={row:row,gh:gh,dx:x-r.left,dy:y-r.top};hap(12);
+  auto=setInterval(function(){if(!D)return;if(lastY<90)window.scrollBy(0,-14);else if(lastY>innerHeight-130)window.scrollBy(0,14);place(lastY)},16);
+ }
+ var lastX=0;
+ function place(y){
+  if(!D)return;D.gh.style.top=(y-D.dy)+'px';
+  D.gh.style.display='none';var el=document.elementFromPoint(lastX,y);D.gh.style.display='';
+  if(!el)return;
+  var tr=el.closest&&el.closest('.rrow');
+  if(tr&&tr!==D.row){var b=tr.getBoundingClientRect();if(y<b.top+b.height/2)tr.parentNode.insertBefore(D.row,tr);else tr.parentNode.insertBefore(D.row,tr.nextSibling);return}
+  var g=el.closest&&el.closest('.rg');
+  if(g&&!tr){var rs=rows(g).filter(function(q){return q!==D.row});
+   if(!rs.length){g.appendChild(D.row);return}
+   var f=rs[0].getBoundingClientRect(),l=rs[rs.length-1].getBoundingClientRect();
+   if(y<f.top)rs[0].parentNode.insertBefore(D.row,rs[0]);else if(y>l.bottom)rs[rs.length-1].parentNode.insertBefore(D.row,rs[rs.length-1].nextSibling)}
+ }
+ function end(ok){
+  cancel();if(!D)return;clearInterval(auto);var d=D;D=null;
+  d.gh.remove();d.row.classList.remove('rdrag');document.body.classList.remove('rdragging');
+  swallow=true;setTimeout(function(){swallow=false},400);
+  if(!ok){renderView();return}
+  var now=Date.now();
+  document.querySelectorAll('.rg[data-g]').forEach(function(g){
+   rows(g).forEach(function(rw,i){
+    var id=rw.dataset.id,gk=g.dataset.g,o=rw.dataset.act==='hab'?S.habits.filter(function(x){return x.id===id})[0]:S.tasks.filter(function(x){return x.id===id})[0];
+    if(!o)return;if(o.rt!==gk||o.o!==i+1){o.rt=gk;o.o=i+1;o.ts=now}
+   });
+  });
+  save();renderView();hap(8);
+ }
+ document.addEventListener('pointerdown',function(e){
+  var row=e.target.closest&&e.target.closest('.rrow');if(!row||(e.pointerType==='mouse'&&e.button!==0))return;
+  sx=lastX=e.clientX;sy=lastY=e.clientY;cancel();
+  T=setTimeout(function(){T=null;start(row,sx,sy)},380);
+ },true);
+ document.addEventListener('pointermove',function(e){
+  lastX=e.clientX;lastY=e.clientY;
+  if(T&&(Math.abs(e.clientX-sx)>9||Math.abs(e.clientY-sy)>9))cancel();
+  if(D){e.preventDefault();place(e.clientY)}
+ },true);
+ document.addEventListener('touchmove',function(e){if(D)e.preventDefault()},{passive:false,capture:true});
+ document.addEventListener('pointerup',function(){cancel();if(D)end(true)},true);
+ document.addEventListener('pointercancel',function(){cancel();if(D)end(true)},true);
+ document.addEventListener('click',function(e){if(swallow&&e.target.closest&&e.target.closest('.rrow')){e.stopPropagation();e.preventDefault()}},true);
+ document.addEventListener('contextmenu',function(e){if(e.target.closest&&e.target.closest('.rrow'))e.preventDefault()});
+ document.addEventListener('keydown',function(e){if(D&&e.key==='Escape')end(false)});
+})();
 /* ================= Extras: bodyweight, charts, calculator, Today, review, backup, install, reminders ================= */
 function xLine(a,o){
  o=o||{};var W=o.w||320,H=o.h||150,pl=34,pr=10,pt=10,pb=22;
