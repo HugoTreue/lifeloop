@@ -2232,7 +2232,10 @@ function tweenPts(to){
  (function f(n){if(id!==tw)return;var k=Math.min(1,(n-t0)/700),v=Math.round(from+(to-from)*(1-Math.pow(1-k,3)));disp=v;var e2=$('#ptsNum');if(e2)e2.textContent=v;if(k<1)requestAnimationFrame(f)})(t0);
 }
 function fmtDay(x){var p=x.split('-');return new Date(+p[0],+p[1]-1,+p[2]).toLocaleDateString(undefined,{weekday:'short',day:'numeric'})}
-function rollover(){var t=today(),ch=false;S.tasks.forEach(function(x){if(x.status==='later'&&x.until&&x.until<=t){x.status='today';x.until=null;ch=true}});if(ch)save()}
+function rollover(){var t=today(),ch=false;
+ if(!S.lastDay){S.lastDay=t;ch=true}
+ else if(S.lastDay<t){var n=0,nw=Date.now();S.tasks.forEach(function(x){if(x.status==='today'){x.status='inbox';x.ts=nw;n++}});S.lastDay=t;ch=true;S.dplan=null;if(n)setTimeout(function(){toast(n+' unfinished from yesterday moved to your Inbox, not carried over')},700)}
+ S.tasks.forEach(function(x){if(x.status==='later'&&x.until&&x.until<=t){x.status='today';x.until=null;ch=true}});if(ch)save()}
 
 /* ---------- derived ---------- */
 function tasksBy(st){return S.tasks.filter(function(t){return t.status===st})}
@@ -5446,13 +5449,15 @@ function todayOv(){
  var lg=gymLogOf(t0),ids=pd.ex.map(function(e){return e.id}),dn=lg?lg.done.filter(function(x){return ids.indexOf(x)>-1}).length:0;
  rows.push(['gym','Gym',pd.ex.length?esc(pd.name)+' · '+(lg&&lg.fin?'logged':dn+' of '+pd.ex.length+' done'):'Rest day',lg&&lg.fin?100:pd.ex.length?Math.round(dn/pd.ex.length*100):100,'#22d3ee']);
  var st=nuSet(),nt=nuDayTot(t0),rec=nuRec(t0)||{};
- rows.push(['nutri','Food',Math.round(nt.k)+' / '+Math.round(st.kcal)+' kcal · '+Math.round(nt.p)+' g protein · '+(+rec.water||0)+' water',Math.min(100,Math.round(nt.k/st.kcal*100)),'#f97316']);
+ rows.push(['nutri','Food',Math.round(nt.k)+' / '+Math.round(st.kcal)+' kcal · '+Math.max(0,Math.round(st.p-nt.p))+' g protein left · '+(+rec.water||0)+' water',Math.min(100,Math.round(nt.k/st.kcal*100)),'#f97316']);
  var tl=todayList().length,dt=doneToday().length;
- rows.push(['life','Tasks',tl?tl+' left today':(dt?'All done':'Nothing planned'),dt+tl?Math.round(dt/(dt+tl)*100):0,'#e5b13a']);
+ var ld0=tl?dcLoad():null;
+ rows.push(['life','Tasks',tl?tl+' left today'+(ld0&&ld0.over>0?' · over by '+dcDur(ld0.over):ld0&&ld0.need?' · about '+dcDur(ld0.need)+' of work':''):(dt?'All done':'Nothing planned'),dt+tl?Math.round(dt/(dt+tl)*100):0,'#e5b13a']);
  var nx=S.sitems.filter(function(x){return !x.done&&x.due}).sort(sOrder)[0],sm=0;S.ssess.forEach(function(x){if(x.day===t0)sm+=x.min});
  rows.push(['study','Study',(nx?esc(nx.t.length>26?nx.t.slice(0,25)+'…':nx.t)+' · '+xCount(nx.due):'No deadlines')+(sm?' · '+fmtM(sm)+' today':''),Math.min(100,Math.round(sm/Math.max(30,Math.round(sGoal()*60/7))*100)),'#f59e0b']);
- var ev=evOn(t0);
- rows.push(['cal','Calendar',ev.length?ev.length+(ev.length===1?' event · ':' events · ')+esc(ev[0].title||ev[0].t||'')+(ev[0].time?' '+esc(ev[0].time):''):'Nothing scheduled',ev.length?100:0,'#8b5cf6']);
+ var ev=evOn(t0).map(function(e){return {t:e.time||'',x:e.title||e.t||''}}).concat(classesOn(t0).map(function(c){return {t:c.time||'',x:'Class · '+smod(c.mod).n}}));ev.sort(function(a,b){return (a.t||'99')<(b.t||'99')?-1:1});
+ var nmn=dcNow(),nxe=ev.filter(function(e){var m=cvMin(e.t);return m===null||m+60>nmn})[0]||ev[ev.length-1];
+ rows.push(['cal','Calendar',ev.length?ev.length+(ev.length===1?' event · ':' events · ')+(nxe===ev[ev.length-1]&&nxe&&cvMin(nxe.t)!==null&&cvMin(nxe.t)+60<=nmn?'all done':'next '+esc(nxe.x)+(nxe.t?' '+esc(nxe.t):'')):'Nothing scheduled',ev.length?100:0,'#8b5cf6']);
  el.innerHTML='<div class="tovh"><h3>Today</h3><button class="k sm" data-act="wreview">Weekly review</button></div>'+upNext()+rows.map(function(r){return '<button class="tovr" data-act="app" data-app="'+r[0]+'"><i style="background:'+r[4]+'"></i><span class="tovl">'+r[1]+'</span><span class="tovt">'+r[2]+'</span><span class="tovb"><b style="width:'+r[3]+'%;background:'+r[4]+'"></b></span></button>'}).join('')+rvToggle();
 }
 /* ----- weekly review ----- */
@@ -6666,7 +6671,7 @@ setInterval(function(){
 window.addEventListener('resize',function(){var i=$('#tabInd');if(i)i.dataset.mk='';moveInd();segPrev={};positionSegs()});
 try{if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){var i=$('#tabInd');if(i)i.dataset.mk='';moveInd()})}catch(e){}
 var lastDay=today();
-function dayCheck(){var t=today();if(t!==lastDay){lastDay=t;try{renderAll()}catch(e){}}}
+function dayCheck(){var t=today();if(t!==lastDay){lastDay=t;try{rollover();renderAll()}catch(e){}}}
 setInterval(dayCheck,30000);setInterval(dcNudge,60000);setTimeout(dcNudge,6000);document.addEventListener('change',function(e){if(e.target&&e.target.id==='dcBed'&&cvMin(e.target.value)!==null){lsSet('lifeloop.bed',e.target.value);dcPlanNow()}});document.addEventListener('visibilitychange',function(){if(!document.hidden)dayCheck()});
 updateHint();renderAll();initDb();
 })();
