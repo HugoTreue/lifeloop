@@ -2232,10 +2232,7 @@ function tweenPts(to){
  (function f(n){if(id!==tw)return;var k=Math.min(1,(n-t0)/700),v=Math.round(from+(to-from)*(1-Math.pow(1-k,3)));disp=v;var e2=$('#ptsNum');if(e2)e2.textContent=v;if(k<1)requestAnimationFrame(f)})(t0);
 }
 function fmtDay(x){var p=x.split('-');return new Date(+p[0],+p[1]-1,+p[2]).toLocaleDateString(undefined,{weekday:'short',day:'numeric'})}
-function rollover(){var t=today(),ch=false;
- if(!S.lastDay){S.lastDay=t;ch=true}
- else if(S.lastDay<t){var n=0,nw=Date.now();S.tasks.forEach(function(x){if(x.status==='today'){x.status='inbox';x.ts=nw;n++}});S.lastDay=t;ch=true;S.dplan=null;if(n)setTimeout(function(){toast(n+' unfinished from yesterday moved to your Inbox, not carried over')},700)}
- S.tasks.forEach(function(x){if(x.status==='later'&&x.until&&x.until<=t){x.status='today';x.until=null;ch=true}});if(ch)save()}
+function rollover(){var t=today(),ch=false;S.tasks.forEach(function(x){if(x.status==='later'&&x.until&&x.until<=t){x.status='today';x.until=null;ch=true}});if(ch)save()}
 
 /* ---------- derived ---------- */
 function tasksBy(st){return S.tasks.filter(function(t){return t.status===st})}
@@ -6669,7 +6666,7 @@ setInterval(function(){
 window.addEventListener('resize',function(){var i=$('#tabInd');if(i)i.dataset.mk='';moveInd();segPrev={};positionSegs()});
 try{if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){var i=$('#tabInd');if(i)i.dataset.mk='';moveInd()})}catch(e){}
 var lastDay=today();
-function dayCheck(){var t=today();if(t!==lastDay){lastDay=t;try{rollover();renderAll()}catch(e){}}}
+function dayCheck(){var t=today();if(t!==lastDay){lastDay=t;try{renderAll()}catch(e){}}}
 setInterval(dayCheck,30000);setInterval(dcNudge,60000);setTimeout(dcNudge,6000);document.addEventListener('change',function(e){if(e.target&&e.target.id==='dcBed'&&cvMin(e.target.value)!==null){lsSet('lifeloop.bed',e.target.value);dcPlanNow()}});document.addEventListener('visibilitychange',function(){if(!document.hidden)dayCheck()});
 updateHint();renderAll();initDb();
 })();
