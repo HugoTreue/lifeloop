@@ -1703,6 +1703,8 @@ details::details-content{block-size:0;opacity:0;overflow:clip;transition:block-s
 details[open]::details-content{block-size:auto;opacity:1}
 @supports not selector(::details-content){details[open]>*:not(summary){animation:tin .28s ease both}}
 @media(prefers-reduced-motion:reduce){.hasSld>.sld,details::details-content{transition:none!important}}
+.shell{max-width:none;margin:0}
+.shell>.wrap{margin-left:auto;margin-right:auto}
 </style>
 
 
