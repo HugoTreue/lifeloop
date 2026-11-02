@@ -6851,6 +6851,8 @@ setInterval(dayCheck,30000);setInterval(dcNudge,60000);setTimeout(dcNudge,6000);
   return res;
  };
 })();
+/* one-time fix for three habits */
+try{if(!S.fx1){var _n=Date.now(),_fx={r3rhluoxot:{rt:'rev'},hflho4qxot:{rt:'rev'},xgyy3u2xot:{rt:'prep',dow:[3,4]},bpak53f4ff:{dow:[3]}};S.habits.forEach(function(h){var f=_fx[h.id];if(f){for(var q in f)h[q]=f[q];h.ts=_n}});S.fx1=1;save()}}catch(e){}
 updateHint();renderAll();initDb();
 })();
 </script>
