@@ -5332,7 +5332,7 @@ function dcLoad(){
 function dcDone(b){if(b.k==='h'){var h=S.habits.filter(function(x){return x.id===b.id})[0];return !h||habitDone(h,today())}var t=S.tasks.filter(function(x){return x.id===b.id})[0];return !t||t.status==='done'||t.status!=='today'}
 var pvDay=null;
 function pDay(){return pvDay&&pvDay>=today()?pvDay:today()}
-function pTasks(d){var t=today();return d===t?S.tasks.filter(function(x){return x.status==='today'}):S.tasks.filter(function(x){return x.status==='later'&&x.until===d})}
+function pTasks(d){var t=today();return d===t?S.tasks.filter(function(x){return x.status==='today'&&x.pl===t}):S.tasks.filter(function(x){return x.status==='later'&&x.until===d})}
 function pRow(x,d){
  var done=x.status==='done',isT=d===today(),ac=areaOf(x.area);
  return '<div class="prow'+(done?' on':'')+'" data-tid="'+x.id+'"'+(ac?' style="--c:'+ac.c+'"':'')+'>'+
@@ -5346,7 +5346,7 @@ function planHtml(){
  for(k=0;k<8;k++){var dd=addDays(t,k),n=pTasks(dd).length,dt=new Date(dd+'T00:00:00');
   h+='<button class="pdchip'+(dd===d?' on':'')+'" data-act="pday" data-day="'+dd+'" role="tab" aria-selected="'+(dd===d)+'"><span>'+(k===0?'Today':k===1?'Tmrw':DN[dt.getDay()])+'</span><b>'+dt.getDate()+'</b><i>'+(n||'')+'</i></button>'}
  h+='</div>';
- var all=pTasks(d),dn=d===t?doneToday():[];
+ var all=pTasks(d),dn=d===t?doneToday().filter(function(x){return x.pl===t}):[];
  var lbl=new Date(d+'T00:00:00').toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'});
  h+='<div class="pdh"><b>'+esc(lbl)+'</b><span class="mu">'+all.length+' to do'+(dn.length?' · '+dn.length+' done':'')+'</span></div>';
  [[1,'Primary','The things that must get done'],[0,'Secondary','If there is time']].forEach(function(g){
@@ -5356,8 +5356,8 @@ function planHtml(){
    (rows.length||dr.length?'':'<div class="pempty">'+g[2]+'</div>')+
    '<form class="padd" data-pri="'+g[0]+'" autocomplete="off"><input type="text" maxlength="140" placeholder="Add to '+g[1].toLowerCase()+'" aria-label="Add a '+g[1].toLowerCase()+' task"><button class="k sm" type="submit">Add</button></form></div>';
  });
- var ib=S.tasks.filter(function(x){return x.status==='inbox'});
- if(ib.length)h+='<details class="sec pinb"><summary>From your Inbox ('+ib.length+')</summary>'+ib.slice(0,30).map(function(x){return '<div class="prow ro"><button class="ptt" data-act="edit" data-kind="task" data-id="'+x.id+'">'+esc(x.title)+'</button><button class="k sm" data-act="padd2" data-id="'+x.id+'">Add</button></div>'}).join('')+'</details>';
+ var ib=S.tasks.filter(function(x){return x.status==='inbox'||(x.status==='today'&&x.pl!==t&&d===t)||(x.status==='later'&&!x.until)});
+ if(ib.length)h+='<details class="sec pinb"><summary>Add from your tasks ('+ib.length+')</summary>'+ib.slice(0,60).map(function(x){return '<div class="prow ro"><button class="ptt" data-act="edit" data-kind="task" data-id="'+x.id+'">'+esc(x.title)+'<small>'+(x.status==='inbox'?'Inbox':x.status==='today'?'On your list':'Later')+'</small></button><button class="k sm" data-act="padd2" data-id="'+x.id+'">Add</button></div>'}).join('')+'</details>';
  if(d===t&&dcNow()>=1200)h+='<div class="banner"><span>Evening. Close out the day and set up tomorrow.</span><button class="k sm" data-act="shutdown">Close out</button></div>';
  h+='<div class="mu" style="font-size:12px;margin-top:6px">Hold a task and drag it to reorder, between Primary and Secondary, or onto another day above.</div>';
  return h;
@@ -5366,7 +5366,7 @@ function pMoveTo(id,a){
  var x=S.tasks.filter(function(q){return q.id===id})[0];if(!x)return;var t=today(),now=Date.now();
  if(a==='inbox'){x.status='inbox';x.until=null}
  else if(a==='later'){x.status='later';x.until=null}
- else if(a===t){x.status='today';x.until=null}
+ else if(a===t){x.status='today';x.until=null;x.pl=t}
  else{x.status='later';x.until=a}
  x.ts=now;save();renderView();todayOv();
 }
@@ -5381,7 +5381,7 @@ document.addEventListener('submit',function(e){
  var f=e.target.closest&&e.target.closest('form.padd');if(!f)return;e.preventDefault();
  var inp=f.querySelector('input'),v=(inp.value||'').trim();if(!v)return;
  var d=pDay(),t=today(),now=Date.now();
- S.tasks.push({id:uid(),title:v,area:null,status:d===t?'today':'later',until:d===t?null:d,xp:f.dataset.pri==='1'?25:10,pri:f.dataset.pri==='1'?1:0,goalId:null,created:now,ts:now,doneAt:null,ex:false});
+ S.tasks.push({id:uid(),title:v,area:null,status:d===t?'today':'later',until:d===t?null:d,pl:d===t?t:null,xp:f.dataset.pri==='1'?25:10,pri:f.dataset.pri==='1'?1:0,goalId:null,created:now,ts:now,doneAt:null,ex:false});
  save();renderView();todayOv();var ni=document.querySelector('form.padd[data-pri="'+f.dataset.pri+'"] input');if(ni)ni.focus();
 });
 /* plan: hold and drag to reorder, switch list, or drop on a day */
