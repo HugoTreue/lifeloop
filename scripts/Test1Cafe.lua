@@ -1,6 +1,8 @@
 --========================================================
--- Test1Cafe: Clicky Panel v2 (client-side only)
+-- Test1Cafe: Clicky Panel v3 (client-side only)
 -- Draggable (title bar), resizable (corner), RightShift hides/shows
+-- "Kill UI" fully shuts everything down; running the script again
+-- starts a clean new copy.
 --========================================================
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
@@ -9,19 +11,37 @@ local TweenService = game:GetService("TweenService")
 
 local player = Players.LocalPlayer
 
+-- if an older copy is still running, shut it down first
+local env = (getgenv and getgenv()) or _G
+if env.Test1CafeKill then
+	pcall(env.Test1CafeKill)
+end
+
 ------------------------------------------------------------
 -- STATE
 ------------------------------------------------------------
-local cfg = {
-	name = "Clickypart", -- name of the parts to work with
-	interval = 3,        -- seconds between automatic clicks
-	clickAll = false,    -- "click one = get all"
-	auto = false,        -- "auto gather"
-}
+local function defaultCfg()
+	return {
+		name = "Clickypart", -- name of the parts to work with
+		interval = 3,        -- seconds between automatic clicks
+		clickAll = false,    -- "click one = get all"
+		auto = false,        -- "auto gather"
+	}
+end
+local cfg = defaultCfg()
+
 local saved, hooked = {}, {}
 local busy = false
+local alive = true
+local conns = {}
 local setStatus = function() end   -- replaced once the GUI exists
 local refreshDot = function() end  -- replaced once the GUI exists
+local kill                         -- defined after the GUI exists
+
+local function track(c)
+	conns[#conns + 1] = c
+	return c
+end
 
 ------------------------------------------------------------
 -- LOGIC
@@ -53,6 +73,7 @@ local function fireAll(except)
 	busy = true
 	local n = 0
 	for _, d in ipairs(findDetectors()) do
+		if not alive then break end
 		if d ~= except then
 			fireclickdetector(d)
 			n += 1
@@ -92,23 +113,54 @@ local function restoreAll()
 	setStatus(("Put %d item(s) back"):format(n))
 end
 
+-- drops every tool you're holding or carrying, in front of you.
+-- Client-side only: the server still thinks you own them.
+local function dropTools()
+	local char = player.Character
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
+	local root = char and char:FindFirstChild("HumanoidRootPart")
+	if not (hum and root) then setStatus("No character yet", true) return end
+
+	hum:UnequipTools() -- moves the tool you're holding back into the backpack
+
+	local tools = {}
+	local backpack = player:FindFirstChildOfClass("Backpack")
+	if backpack then
+		for _, t in ipairs(backpack:GetChildren()) do
+			if t:IsA("Tool") then tools[#tools + 1] = t end
+		end
+	end
+	for _, t in ipairs(char:GetChildren()) do
+		if t:IsA("Tool") then tools[#tools + 1] = t end
+	end
+
+	for _, t in ipairs(tools) do
+		t.Parent = Workspace
+		local handle = t:FindFirstChild("Handle")
+		if handle and handle:IsA("BasePart") then
+			handle.CFrame = root.CFrame * CFrame.new(math.random(-4, 4), 1, -4)
+		end
+	end
+	setStatus(("Dropped %d tool(s)"):format(#tools))
+end
+
 local function hook(d)
 	if hooked[d] then return end
 	hooked[d] = true
-	d.MouseClick:Connect(function()
-		if cfg.clickAll and d.Parent and d.Parent.Name == cfg.name then
+	track(d.MouseClick:Connect(function()
+		if alive and cfg.clickAll and d.Parent and d.Parent.Name == cfg.name then
 			local n = fireAll(d)
 			if n > 0 then setStatus(("Click one: also clicked %d more"):format(n)) end
 		end
-	end)
+	end))
 end
 
 for _, o in ipairs(Workspace:GetDescendants()) do
 	if o:IsA("ClickDetector") then hook(o) end
 end
-Workspace.DescendantAdded:Connect(function(o)
+track(Workspace.DescendantAdded:Connect(function(o)
 	if o:IsA("ClickDetector") then task.defer(hook, o) end
-end)
+end))
 
 ------------------------------------------------------------
 -- STYLE
@@ -127,6 +179,8 @@ local C = {
 	on      = Color3.fromRGB(70, 200, 120),
 	off     = Color3.fromRGB(70, 73, 90),
 	err     = Color3.fromRGB(240, 100, 100),
+	dangerBg = Color3.fromRGB(70, 34, 40),
+	dangerHi = Color3.fromRGB(100, 42, 50),
 }
 
 local FAST = TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
@@ -154,7 +208,6 @@ local function tween(obj, props)
 	TweenService:Create(obj, FAST, props):Play()
 end
 
--- smooth color change on hover
 local function hover(obj, prop, normal, over)
 	obj.MouseEnter:Connect(function() tween(obj, { [prop] = over }) end)
 	obj.MouseLeave:Connect(function() tween(obj, { [prop] = normal }) end)
@@ -191,7 +244,6 @@ local titleBar = new("Frame", {
 }, main)
 round(titleBar, 12)
 
--- squares off the bottom corners while the panel is open
 local filler = new("Frame", {
 	Size = UDim2.new(1, 0, 0, 12),
 	Position = UDim2.new(0, 0, 1, -12),
@@ -240,7 +292,6 @@ new("TextLabel", {
 	TextXAlignment = Enum.TextXAlignment.Left,
 }, titleBar)
 
--- little dot that lights up while anything is running
 local dot = new("Frame", {
 	Size = UDim2.new(0, 8, 0, 8),
 	Position = UDim2.new(1, -96, 0.5, -4),
@@ -287,7 +338,7 @@ local function titleButton(text, xOffset, color, hoverColor, callback)
 	end)
 	b.MouseButton1Click:Connect(callback)
 end
-titleButton("X", -36, C.dim, C.err, function() gui:Destroy() end)
+titleButton("X", -36, C.dim, C.err, function() kill() end)
 titleButton("-", -66, C.dim, C.text, function()
 	content.Visible = not content.Visible
 	filler.Visible = content.Visible
@@ -362,7 +413,6 @@ local function makeButtons(a, b)
 		FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 8),
 	}, row)
 
-	-- a = primary (filled), b = secondary (outlined)
 	local primary = new("TextButton", {
 		Size = UDim2.new(0.5, -4, 1, 0), BackgroundColor3 = C.accent, BorderSizePixel = 0,
 		Text = a[1], TextColor3 = Color3.new(1, 1, 1), AutoButtonColor = false,
@@ -381,6 +431,23 @@ local function makeButtons(a, b)
 	stroke(secondary)
 	hover(secondary, "BackgroundColor3", C.card, C.cardHi)
 	secondary.MouseButton1Click:Connect(b[2])
+end
+
+-- full-width button; style = "normal" or "danger"
+local function makeWide(text, style, callback)
+	local danger = style == "danger"
+	local base = danger and C.dangerBg or C.card
+	local over = danger and C.dangerHi or C.cardHi
+	local btn = new("TextButton", {
+		Size = UDim2.new(1, 0, 0, 36), BackgroundColor3 = base, BorderSizePixel = 0,
+		Text = text, TextColor3 = danger and C.err or C.text, AutoButtonColor = false,
+		Font = Enum.Font.GothamBold, TextSize = 13,
+	}, content)
+	round(btn, 9)
+	stroke(btn, danger and C.err or C.stroke)
+	hover(btn, "BackgroundColor3", base, over)
+	btn.MouseButton1Click:Connect(callback)
+	return btn
 end
 
 local function makeInput(label, default, callback)
@@ -424,6 +491,9 @@ end)
 
 header("MOVE ITEMS")
 makeButtons({ "Bring all to me", bringAll }, { "Put them back", restoreAll })
+
+header("TOOLS")
+makeWide("Drop all tools", "normal", dropTools)
 
 header("SETTINGS")
 makeInput("Item name", cfg.name, function(text)
@@ -471,6 +541,8 @@ new("TextLabel", {
 	TextXAlignment = Enum.TextXAlignment.Left,
 }, footer)
 
+makeWide("Kill UI", "danger", function() kill() end)
+
 setStatus = function(text, isErr)
 	statusLabel.Text = text
 	statusLabel.TextColor3 = isErr and C.err or C.text
@@ -491,25 +563,25 @@ titleBar.InputBegan:Connect(function(i)
 		dragging, dragStart, startPos = true, i.Position, main.Position
 	end
 end)
-UserInputService.InputChanged:Connect(function(i)
+track(UserInputService.InputChanged:Connect(function(i)
 	if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement
 		or i.UserInputType == Enum.UserInputType.Touch) then
 		local d = i.Position - dragStart
 		main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X,
 			startPos.Y.Scale, startPos.Y.Offset + d.Y)
 	end
-end)
-UserInputService.InputEnded:Connect(function(i)
+end))
+track(UserInputService.InputEnded:Connect(function(i)
 	if i.UserInputType == Enum.UserInputType.MouseButton1
 		or i.UserInputType == Enum.UserInputType.Touch then
 		dragging = false
 	end
-end)
-UserInputService.InputBegan:Connect(function(i, processed)
+end))
+track(UserInputService.InputBegan:Connect(function(i, processed)
 	if not processed and i.KeyCode == Enum.KeyCode.RightShift then
 		main.Visible = not main.Visible
 	end
-end)
+end))
 
 ------------------------------------------------------------
 -- RESIZE (drag the corner grip)
@@ -552,27 +624,53 @@ handle.InputBegan:Connect(function(i)
 		resizing, rStart, rScale = true, i.Position, uiScale.Scale
 	end
 end)
-UserInputService.InputChanged:Connect(function(i)
+track(UserInputService.InputChanged:Connect(function(i)
 	if resizing and (i.UserInputType == Enum.UserInputType.MouseMovement
 		or i.UserInputType == Enum.UserInputType.Touch) then
 		local dx = i.Position.X - rStart.X
 		uiScale.Scale = math.clamp(rScale + dx / BASE_WIDTH, MIN_SCALE, MAX_SCALE)
 	end
-end)
-UserInputService.InputEnded:Connect(function(i)
+end))
+track(UserInputService.InputEnded:Connect(function(i)
 	if i.UserInputType == Enum.UserInputType.MouseButton1
 		or i.UserInputType == Enum.UserInputType.Touch then
 		resizing = false
 	end
-end)
+end))
 
 ------------------------------------------------------------
--- BACKGROUND LOOPS (stop when the panel is closed)
+-- KILL UI: stop everything, put things back, reset to defaults
+------------------------------------------------------------
+kill = function()
+	if not alive then return end
+	alive = false
+
+	-- reset every function to its default
+	cfg = defaultCfg()
+	busy = false
+
+	-- put moved items back where they were
+	pcall(restoreAll)
+
+	-- disconnect every listener this script made
+	for _, c in ipairs(conns) do
+		pcall(function() c:Disconnect() end)
+	end
+	conns = {}
+	hooked = {}
+
+	if gui then gui:Destroy() end
+	if env.Test1CafeKill == kill then env.Test1CafeKill = nil end
+end
+env.Test1CafeKill = kill
+
+------------------------------------------------------------
+-- BACKGROUND LOOPS (stop when the panel is killed)
 ------------------------------------------------------------
 task.spawn(function() -- auto gather
-	while gui.Parent do
+	while alive do
 		task.wait(cfg.interval)
-		if cfg.auto and gui.Parent then
+		if alive and cfg.auto then
 			local n = fireAll()
 			if n > 0 then setStatus(("Auto gather: clicked %d item(s)"):format(n)) end
 		end
@@ -580,7 +678,7 @@ task.spawn(function() -- auto gather
 end)
 
 task.spawn(function() -- item counter
-	while gui.Parent do
+	while alive do
 		if content.Visible then
 			countLabel.Text = ('Found <b>%d</b> item(s) named "%s"'):format(#findParts(), cfg.name)
 		end
