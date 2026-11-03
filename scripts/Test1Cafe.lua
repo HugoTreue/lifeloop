@@ -5,6 +5,7 @@
 --========================================================
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
 
@@ -20,7 +21,8 @@ end
 local function defaultCfg()
 	return {
 		name = "Clickypart", -- name of the parts to work with
-		interval = 3,        -- seconds between automatic clicks
+		interval = 1,        -- min seconds between clicks on the SAME item
+		burst = 25,          -- max clicks per frame (auto-shrinks if your FPS drops)
 		clickAll = false,    -- "click one = get all"
 		auto = false,        -- "auto gather"
 		maxTools = 0,        -- how many tools "Drop tools" drops; 0 = all
@@ -57,33 +59,71 @@ local function findParts()
 	return t
 end
 
-local function findDetectors()
-	local t = {}
+-- Detector cache: one full scan builds it, then DescendantAdded/Removing keep it
+-- current, so auto gather never has to walk the whole Workspace again.
+-- detectors[d] = os.clock() of the last click on d
+local detectors, detCount = {}, 0
+local clicksTotal = 0
+local warnedNoClick = false
+
+local function rebuildDetectors()
+	local old = detectors
+	detectors, detCount = {}, 0
 	for _, o in ipairs(Workspace:GetDescendants()) do
 		if o:IsA("ClickDetector") and o.Parent and o.Parent.Name == cfg.name then
-			t[#t + 1] = o
+			detectors[o] = old[o] or 0
+			detCount += 1
 		end
 	end
-	return t
 end
 
-local function fireAll(except)
-	if busy then return 0 end
+-- Fires up to maxN detectors whose per-item cooldown (cfg.interval) is over,
+-- longest-waiting first, so every item is retried as soon as it can be.
+local function fireReady(maxN)
 	if not fireclickdetector then
-		setStatus("Your mod menu has no fireclickdetector, so clicking is off", true)
+		if not warnedNoClick then -- say it once, not every frame
+			warnedNoClick = true
+			setStatus("Your mod menu has no fireclickdetector, so clicking is off", true)
+		end
 		return 0
 	end
-	busy = true
+	local now = os.clock()
+	local ready = {}
+	for d, last in pairs(detectors) do
+		if now - last >= cfg.interval then ready[#ready + 1] = d end
+	end
+	table.sort(ready, function(x, y) return detectors[x] < detectors[y] end)
 	local n = 0
-	for _, d in ipairs(findDetectors()) do
-		if not alive then break end
-		if d ~= except then
+	for i = 1, math.min(#ready, maxN) do
+		local d = ready[i]
+		if detectors[d] then -- may have been removed meanwhile
 			fireclickdetector(d)
+			detectors[d] = now
 			n += 1
-			task.wait()
 		end
 	end
-	busy = false
+	clicksTotal += n
+	return n
+end
+
+-- "Click one = get all": fire every OTHER item once, a burst per frame
+local function fireOthers(except)
+	if not fireclickdetector then return 0 end
+	local list = {}
+	for d in pairs(detectors) do
+		if d ~= except then list[#list + 1] = d end
+	end
+	local n = 0
+	for i, d in ipairs(list) do
+		if not alive then break end
+		if detectors[d] then
+			fireclickdetector(d)
+			detectors[d] = os.clock()
+			n += 1
+		end
+		if i % cfg.burst == 0 then RunService.Heartbeat:Wait() end
+	end
+	clicksTotal += n
 	return n
 end
 
@@ -175,7 +215,7 @@ local function hook(d)
 	hooked[d] = true
 	track(d.MouseClick:Connect(function()
 		if alive and cfg.clickAll and d.Parent and d.Parent.Name == cfg.name then
-			local n = fireAll(d)
+			local n = fireOthers(d)
 			if n > 0 then setStatus(("Click one: also clicked %d more"):format(n)) end
 		end
 	end))
@@ -184,9 +224,31 @@ end
 for _, o in ipairs(Workspace:GetDescendants()) do
 	if o:IsA("ClickDetector") then hook(o) end
 end
+rebuildDetectors()
 track(Workspace.DescendantAdded:Connect(function(o)
-	if o:IsA("ClickDetector") then task.defer(hook, o) end
+	if o:IsA("ClickDetector") then
+		task.defer(function()
+			hook(o)
+			if o.Parent and o.Parent.Name == cfg.name and not detectors[o] then
+				detectors[o] = 0
+				detCount += 1
+			end
+		end)
+	end
 end))
+track(Workspace.DescendantRemoving:Connect(function(o)
+	if detectors[o] then
+		detectors[o] = nil
+		detCount -= 1
+	end
+end))
+-- safety net: a full resync every 30s catches items that were renamed in place
+task.spawn(function()
+	while alive do
+		task.wait(30)
+		if alive then rebuildDetectors() end
+	end
+end)
 
 ------------------------------------------------------------
 -- GUI (Rayfield)
@@ -269,7 +331,6 @@ local Window = Rayfield:CreateWindow({
 -- PLAYER (speed / jump / noclip helpers)
 ------------------------------------------------------------
 local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
 
 local origSpeed, origJump, origUseJP -- game's own values, restored when a toggle goes off
 
@@ -351,7 +412,7 @@ end
 
 -- element handles, kept so "Reset all" can put them back to defaults
 local autoToggle, clickToggle, nameInput, delayInput
-local toolsInput, speedToggle, speedSlider, jumpToggle, jumpSlider
+local toolsInput, burstSlider, speedToggle, speedSlider, jumpToggle, jumpSlider
 local infToggle, noclipToggle, afkToggle
 
 -- ITEMS ---------------------------------------------------------
@@ -387,25 +448,39 @@ nameInput = ItemsTab:CreateInput({
 	RemoveTextAfterFocusLost = false,
 	Flag = "t1c_itemname",
 	Callback = function(text)
-		if text ~= "" then cfg.name = text end
+		if text ~= "" and text ~= cfg.name then
+			cfg.name = text
+			rebuildDetectors()
+		end
 		if nameInput then nameInput:Set(cfg.name) end
 	end,
 })
 delayInput = ItemsTab:CreateInput({
-	Name = "Auto delay (sec)",
+	Name = "Delay per item (sec)",
 	CurrentValue = tostring(cfg.interval),
-	PlaceholderText = "3",
+	PlaceholderText = "1",
 	RemoveTextAfterFocusLost = false,
 	Flag = "t1c_delay",
 	Callback = function(text)
 		local n = tonumber(text)
-		if n then cfg.interval = math.max(0.5, n) end
+		if n then cfg.interval = math.max(0.02, n) end
 		if delayInput then delayInput:Set(tostring(cfg.interval)) end
 	end,
 })
 
+burstSlider = ItemsTab:CreateSlider({
+	Name = "Clicks per frame (max)",
+	Range = { 1, 100 },
+	Increment = 1,
+	Suffix = "clicks",
+	CurrentValue = cfg.burst,
+	Flag = "t1c_burst",
+	Callback = function(v) cfg.burst = v end,
+})
+
 ItemsTab:CreateSection("Found")
 local countLabel = ItemsTab:CreateLabel("Searching...", "search")
+local rateLabel = ItemsTab:CreateLabel("Clicks/sec: 0", "gauge")
 addStatus(ItemsTab)
 
 -- TOOLS ---------------------------------------------------------
@@ -592,6 +667,7 @@ ConfigTab:CreateButton({
 		local d = defaultCfg()
 		nameInput:Set(d.name)
 		delayInput:Set(tostring(d.interval))
+		burstSlider:Set(d.burst)
 		toolsInput:Set(tostring(d.maxTools))
 		speedSlider:Set(d.speed)
 		jumpSlider:Set(d.jump)
@@ -664,19 +740,29 @@ env.RiTWUnboxedKill = kill
 ------------------------------------------------------------
 -- BACKGROUND LOOPS (stop when the panel is killed)
 ------------------------------------------------------------
-task.spawn(function() -- auto gather
-	while alive do
-		task.wait(cfg.interval)
-		if alive and cfg.auto then
-			local n = fireAll()
-			if n > 0 then setStatus(("Auto gather: clicked %d item(s)"):format(n)) end
-		end
+-- auto gather: runs every frame. Each item is clicked again as soon as its own
+-- cooldown (cfg.interval) is over. If your frame rate drops, the burst size
+-- halves automatically (and creeps back up), so it can't freeze your game.
+local burst = cfg.burst
+track(RunService.Heartbeat:Connect(function(dt)
+	if not (alive and cfg.auto) then return end
+	if dt > 1 / 30 then
+		burst = math.max(1, burst // 2)
+	elseif burst < cfg.burst then
+		burst += 1
+	elseif burst > cfg.burst then
+		burst = cfg.burst
 	end
-end)
+	fireReady(burst)
+end))
 
-task.spawn(function() -- item counter
+task.spawn(function() -- once a second: item counter + measured click rate
+	local lastTotal = 0
 	while alive do
-		countLabel:Set(('%d item(s) named "%s"'):format(#findParts(), cfg.name), "search")
-		task.wait(3)
+		task.wait(1)
+		if not alive then break end
+		countLabel:Set(('%d item(s) named "%s"'):format(detCount, cfg.name), "search")
+		rateLabel:Set(("Clicks/sec: %d"):format(clicksTotal - lastTotal), "gauge")
+		lastTotal = clicksTotal
 	end
 end)
