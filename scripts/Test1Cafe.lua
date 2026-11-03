@@ -312,7 +312,7 @@ local spotLabel = Tab:CreateLabel("Spot: not set", "map-pin")
 local function setSpot(cf)
 	dropPoint = cf
 	local p = cf.Position
-	spotLabel:Set(("Spot: %d, %d, %d"):format(p.X, p.Y, p.Z), "map-pin")
+	spotLabel:Set(("Spot: %d, %d, %d"):format(math.floor(p.X), math.floor(p.Y), math.floor(p.Z)), "map-pin")
 	setStatus("Drop spot saved")
 end
 
