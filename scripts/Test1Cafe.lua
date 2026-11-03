@@ -177,8 +177,14 @@ end))
 ------------------------------------------------------------
 -- GUI (Rayfield)
 ------------------------------------------------------------
+-- Rayfield is pinned to one exact commit so a library update can't change how the
+-- panel looks or behaves. To upgrade on purpose, replace the commit hash below.
+local RAYFIELD_COMMIT = "ae2eec9ac0a4f337b8437374e744958e619e6a49"
+env.RAYFIELD_ANALYTICS = false -- opt out of Rayfield's anonymous usage counts
 local okLoad, Rayfield = pcall(function()
-	return loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+	return loadstring(game:HttpGet(
+		"https://raw.githubusercontent.com/SiriusSoftwareLtd/Rayfield/" .. RAYFIELD_COMMIT .. "/source.lua"
+	))()
 end)
 if not okLoad or not Rayfield then
 	warn("Test1Cafe: couldn't load Rayfield: " .. tostring(Rayfield))
