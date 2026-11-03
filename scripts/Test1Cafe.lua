@@ -26,6 +26,7 @@ local function defaultCfg()
 		interval = 3,        -- seconds between automatic clicks
 		clickAll = false,    -- "click one = get all"
 		auto = false,        -- "auto gather"
+		maxTools = 0,        -- how many tools "Drop all tools" drops; 0 = all
 	}
 end
 local cfg = defaultCfg()
@@ -120,38 +121,44 @@ local function dropTools()
 	-- ask the server to do it so everyone sees it
 	local remote = game:GetService("ReplicatedStorage"):FindFirstChild("DropAllTools")
 	if remote and remote:IsA("RemoteEvent") then
-		remote:FireServer()
+		remote:FireServer(cfg.maxTools)
 		setStatus("Asked the server to drop your tools")
 		return
 	end
 
-	-- otherwise fall back to the local-only drop below
+	-- otherwise fall back to the local drop (same method as Infinite Yield's droptools):
+	-- equip everything first, wait a frame, then drop it from the character
 	local char = player.Character
-	local hum = char and char:FindFirstChildOfClass("Humanoid")
-	local root = char and char:FindFirstChild("HumanoidRootPart")
-	if not (hum and root) then setStatus("No character yet", true) return end
-
-	hum:UnequipTools() -- moves the tool you're holding back into the backpack
-
-	local tools = {}
 	local backpack = player:FindFirstChildOfClass("Backpack")
-	if backpack then
-		for _, t in ipairs(backpack:GetChildren()) do
-			if t:IsA("Tool") then tools[#tools + 1] = t end
+	local root = char and char:FindFirstChild("HumanoidRootPart")
+	if not (char and backpack and root) then setStatus("No character yet", true) return end
+
+	-- pick the tools: equipped first, then backpack, capped at cfg.maxTools (0 = all)
+	local selected = {}
+	for _, container in ipairs({ char, backpack }) do
+		for _, t in ipairs(container:GetChildren()) do
+			if t:IsA("Tool") and (cfg.maxTools <= 0 or #selected < cfg.maxTools) then
+				selected[#selected + 1] = t
+			end
 		end
-	end
-	for _, t in ipairs(char:GetChildren()) do
-		if t:IsA("Tool") then tools[#tools + 1] = t end
 	end
 
-	for _, t in ipairs(tools) do
-		t.Parent = Workspace
-		local handle = t:FindFirstChild("Handle")
-		if handle and handle:IsA("BasePart") then
-			handle.CFrame = root.CFrame * CFrame.new(math.random(-4, 4), 1, -4)
+	-- step 1: backpack -> character (equips them so their handles are at you)
+	for _, t in ipairs(selected) do
+		if t.Parent == backpack then t.Parent = char end
+	end
+
+	task.wait() -- let them finish equipping / welding
+
+	-- step 2: character -> workspace (removes the grip weld, they fall where you stand)
+	local n = 0
+	for _, t in ipairs(selected) do
+		if t.Parent == char then
+			t.Parent = Workspace
+			n += 1
 		end
 	end
-	setStatus(("Dropped %d tool(s)"):format(#tools))
+	setStatus(("Dropped %d tool(s)"):format(n))
 end
 
 local function hook(d)
@@ -504,6 +511,11 @@ makeButtons({ "Bring all to me", bringAll }, { "Put them back", restoreAll })
 
 header("TOOLS")
 makeWide("Drop all tools", "normal", dropTools)
+makeInput("Tools to drop (0 = all)", cfg.maxTools, function(text)
+	local n = tonumber(text)
+	if n then cfg.maxTools = math.max(0, math.floor(n)) end
+	return cfg.maxTools
+end)
 
 header("SETTINGS")
 makeInput("Item name", cfg.name, function(text)
