@@ -116,6 +116,16 @@ end
 -- drops every tool you're holding or carrying, in front of you.
 -- Client-side only: the server still thinks you own them.
 local function dropTools()
+	-- if the game has a "DropAllTools" RemoteEvent (see the server Script),
+	-- ask the server to do it so everyone sees it
+	local remote = game:GetService("ReplicatedStorage"):FindFirstChild("DropAllTools")
+	if remote and remote:IsA("RemoteEvent") then
+		remote:FireServer()
+		setStatus("Asked the server to drop your tools")
+		return
+	end
+
+	-- otherwise fall back to the local-only drop below
 	local char = player.Character
 	local hum = char and char:FindFirstChildOfClass("Humanoid")
 	local root = char and char:FindFirstChild("HumanoidRootPart")
