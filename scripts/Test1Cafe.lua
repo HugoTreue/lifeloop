@@ -329,7 +329,7 @@ local content = new("Frame", {
 }, main)
 new("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, content)
 new("UIPadding", {
-	PaddingTop = UDim.new(0, 12), PaddingBottom = UDim.new(0, 14),
+	PaddingTop = UDim.new(0, 4), PaddingBottom = UDim.new(0, 26),
 	PaddingLeft = UDim.new(0, 12), PaddingRight = UDim.new(0, 12),
 }, content)
 
@@ -366,15 +366,16 @@ end)
 ------------------------------------------------------------
 local function header(text)
 	local row = new("Frame", {
-		Size = UDim2.new(1, 0, 0, 16), BackgroundTransparency = 1,
+		Size = UDim2.new(1, 0, 0, 22), BackgroundTransparency = 1,
 	}, content)
+	-- bar + text sit at the bottom of the row so each section gets breathing room above it
 	local bar = new("Frame", {
-		Size = UDim2.new(0, 3, 0, 12), Position = UDim2.new(0, 0, 0.5, -6),
+		Size = UDim2.new(0, 3, 0, 12), Position = UDim2.new(0, 0, 1, -14),
 		BackgroundColor3 = C.accent, BorderSizePixel = 0,
 	}, row)
 	round(bar, 2)
 	new("TextLabel", {
-		Size = UDim2.new(1, -10, 1, 0), Position = UDim2.new(0, 10, 0, 0),
+		Size = UDim2.new(1, -10, 0, 14), Position = UDim2.new(0, 10, 1, -15),
 		BackgroundTransparency = 1, Text = text, TextColor3 = C.dim,
 		Font = Enum.Font.GothamBold, TextSize = 11, TextXAlignment = Enum.TextXAlignment.Left,
 	}, row)
@@ -453,15 +454,16 @@ end
 -- full-width button; style = "normal" or "danger"
 local function makeWide(text, style, callback)
 	local danger = style == "danger"
-	local base = danger and C.dangerBg or C.card
-	local over = danger and C.dangerHi or C.cardHi
+	-- danger = quiet outlined button that only fills in red on hover
+	local base = danger and C.bg or C.card
+	local over = danger and C.dangerBg or C.cardHi
 	local btn = new("TextButton", {
-		Size = UDim2.new(1, 0, 0, 36), BackgroundColor3 = base, BorderSizePixel = 0,
+		Size = UDim2.new(1, 0, 0, danger and 32 or 36), BackgroundColor3 = base, BorderSizePixel = 0,
 		Text = text, TextColor3 = danger and C.err or C.text, AutoButtonColor = false,
 		Font = Enum.Font.GothamBold, TextSize = 13,
 	}, content)
 	round(btn, 9)
-	stroke(btn, danger and C.err or C.stroke)
+	stroke(btn, danger and C.dangerHi or C.stroke)
 	hover(btn, "BackgroundColor3", base, over)
 	btn.MouseButton1Click:Connect(callback)
 	return btn
@@ -510,12 +512,12 @@ header("MOVE ITEMS")
 makeButtons({ "Bring all to me", bringAll }, { "Put them back", restoreAll })
 
 header("TOOLS")
-makeWide("Drop all tools", "normal", dropTools)
 makeInput("Tools to drop (0 = all)", cfg.maxTools, function(text)
 	local n = tonumber(text)
 	if n then cfg.maxTools = math.max(0, math.floor(n)) end
 	return cfg.maxTools
 end)
+makeWide("Drop tools", "normal", dropTools)
 
 header("SETTINGS")
 makeInput("Item name", cfg.name, function(text)
@@ -530,40 +532,46 @@ end)
 
 -- footer card: item counter + status line
 local footer = new("Frame", {
-	Size = UDim2.new(1, 0, 0, 64), BackgroundColor3 = C.card, BorderSizePixel = 0,
+	Size = UDim2.new(1, 0, 0, 58), BackgroundColor3 = C.card, BorderSizePixel = 0,
 }, content)
 round(footer, 9)
 stroke(footer)
 
+-- plain text (no RichText), so no stray <b> tags can show up
 local countLabel = new("TextLabel", {
-	BackgroundTransparency = 1, Position = UDim2.new(0, 12, 0, 7),
-	Size = UDim2.new(1, -24, 0, 16), Text = "Found: ...", RichText = true,
+	BackgroundTransparency = 1, Position = UDim2.new(0, 12, 0, 8),
+	Size = UDim2.new(1, -24, 0, 16), Text = "Searching...",
 	TextColor3 = C.text, Font = Enum.Font.GothamMedium, TextSize = 12,
-	TextXAlignment = Enum.TextXAlignment.Left,
+	TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd,
+}, footer)
+
+-- thin divider between the counter and the status line
+new("Frame", {
+	Size = UDim2.new(1, -24, 0, 1), Position = UDim2.new(0, 12, 0, 29),
+	BackgroundColor3 = C.stroke, BorderSizePixel = 0,
 }, footer)
 
 local statusDot = new("Frame", {
-	Size = UDim2.new(0, 6, 0, 6), Position = UDim2.new(0, 12, 0, 33),
+	Size = UDim2.new(0, 6, 0, 6), Position = UDim2.new(0, 12, 0, 41),
 	BackgroundColor3 = C.on, BorderSizePixel = 0,
 }, footer)
 round(statusDot, 3)
 
 local statusLabel = new("TextLabel", {
-	BackgroundTransparency = 1, Position = UDim2.new(0, 24, 0, 28),
+	BackgroundTransparency = 1, Position = UDim2.new(0, 24, 0, 36),
 	Size = UDim2.new(1, -36, 0, 16), Text = "Ready",
 	TextColor3 = C.dim, Font = Enum.Font.Gotham, TextSize = 12,
 	TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd,
 }, footer)
 
-new("TextLabel", {
-	BackgroundTransparency = 1, Position = UDim2.new(0, 12, 1, -18),
-	Size = UDim2.new(1, -24, 0, 12),
-	Text = "RightShift hides  |  drag corner to resize",
-	TextColor3 = C.dim, Font = Enum.Font.Gotham, TextSize = 10,
-	TextXAlignment = Enum.TextXAlignment.Left,
-}, footer)
-
 makeWide("Kill UI", "danger", function() kill() end)
+
+-- hint lives below the buttons, not inside the footer card
+new("TextLabel", {
+	Size = UDim2.new(1, -24, 0, 12), BackgroundTransparency = 1,
+	Text = "RightShift hides  •  drag the corner to resize",
+	TextColor3 = C.dim, Font = Enum.Font.Gotham, TextSize = 10,
+}, content)
 
 setStatus = function(text, isErr)
 	statusLabel.Text = text
@@ -629,8 +637,8 @@ handle.MouseLeave:Connect(function() tween(handle, { TextColor3 = C.dim }) end)
 
 local function placeHandle()
 	handle.Position = UDim2.fromOffset(
-		main.AbsolutePosition.X + main.AbsoluteSize.X - 24,
-		main.AbsolutePosition.Y + main.AbsoluteSize.Y - 24
+		main.AbsolutePosition.X + main.AbsoluteSize.X - 22,
+		main.AbsolutePosition.Y + main.AbsoluteSize.Y - 22
 	)
 	handle.Visible = main.Visible
 end
@@ -702,7 +710,7 @@ end)
 task.spawn(function() -- item counter
 	while alive do
 		if content.Visible then
-			countLabel.Text = ('Found <b>%d</b> item(s) named "%s"'):format(#findParts(), cfg.name)
+			countLabel.Text = ('%d item(s) named "%s"'):format(#findParts(), cfg.name)
 		end
 		task.wait(3)
 	end
