@@ -24,6 +24,12 @@ local function defaultCfg()
 		clickAll = false,    -- "click one = get all"
 		auto = false,        -- "auto gather"
 		maxTools = 0,        -- how many tools "Drop tools" drops; 0 = all
+		speedOn = false, speed = 50,  -- custom walk speed
+		jumpOn = false, jump = 100,   -- custom jump power
+		infJump = false,     -- infinite jump
+		noclip = false,      -- walk through walls
+		antiAfk = false,     -- stop the idle kick
+		notifyAll = false,   -- pop-up for every status message
 	}
 end
 local cfg = defaultCfg()
@@ -259,11 +265,98 @@ local Window = Rayfield:CreateWindow({
 	KeySystem = false,
 })
 
-local Tab = Window:CreateTab("Main", "layout-dashboard")
+------------------------------------------------------------
+-- PLAYER (speed / jump / noclip helpers)
+------------------------------------------------------------
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 
--- automation ----------------------------------------------------
-Tab:CreateSection("Automation")
-Tab:CreateToggle({
+local origSpeed, origJump, origUseJP -- game's own values, restored when a toggle goes off
+
+local function getHumanoid()
+	local c = player.Character
+	return c and c:FindFirstChildOfClass("Humanoid")
+end
+
+local function applyMovement()
+	local h = getHumanoid()
+	if not h then return end
+
+	if cfg.speedOn then
+		if not origSpeed then origSpeed = h.WalkSpeed end
+		h.WalkSpeed = cfg.speed
+	elseif origSpeed then
+		h.WalkSpeed = origSpeed
+		origSpeed = nil
+	end
+
+	if cfg.jumpOn then
+		if not origJump then origJump, origUseJP = h.JumpPower, h.UseJumpPower end
+		h.UseJumpPower = true
+		h.JumpPower = cfg.jump
+	elseif origJump then
+		h.JumpPower = origJump
+		h.UseJumpPower = origUseJP
+		origJump, origUseJP = nil, nil
+	end
+end
+
+-- infinite jump: every jump press while airborne becomes a new jump
+track(UserInputService.JumpRequest:Connect(function()
+	if cfg.infJump then
+		local h = getHumanoid()
+		if h then h:ChangeState(Enum.HumanoidStateType.Jumping) end
+	end
+end))
+
+-- noclip: keep every part of your character non-solid
+track(RunService.Stepped:Connect(function()
+	if cfg.noclip and player.Character then
+		for _, p in ipairs(player.Character:GetDescendants()) do
+			if p:IsA("BasePart") then p.CanCollide = false end
+		end
+	end
+end))
+
+-- anti-AFK: a tiny fake click whenever Roblox thinks you're idle
+track(player.Idled:Connect(function()
+	if cfg.antiAfk then
+		local vu = game:GetService("VirtualUser")
+		vu:CaptureController()
+		vu:ClickButton2(Vector2.new())
+	end
+end))
+
+task.spawn(function() -- keeps speed/jump applied (games often reset them)
+	while alive do
+		applyMovement()
+		task.wait(0.2)
+	end
+end)
+
+------------------------------------------------------------
+-- GUI TABS
+------------------------------------------------------------
+local ItemsTab = Window:CreateTab("Items", "package")
+local ToolsTab = Window:CreateTab("Tools", "wrench")
+local PlayerTab = Window:CreateTab("Player", "user")
+local ConfigTab = Window:CreateTab("Config", "settings")
+
+-- every tab gets a status line; setStatus updates them all
+local statusLabels = {}
+local function addStatus(tab)
+	tab:CreateSection("Status")
+	statusLabels[#statusLabels + 1] = tab:CreateLabel("Ready", "activity")
+end
+
+-- element handles, kept so "Reset all" can put them back to defaults
+local autoToggle, clickToggle, nameInput, delayInput
+local toolsInput, speedToggle, speedSlider, jumpToggle, jumpSlider
+local infToggle, noclipToggle, afkToggle
+
+-- ITEMS ---------------------------------------------------------
+ItemsTab:CreateSection("Automation")
+autoToggle = ItemsTab:CreateToggle({
 	Name = "Auto gather",
 	CurrentValue = false,
 	Flag = "t1c_auto",
@@ -272,7 +365,7 @@ Tab:CreateToggle({
 		setStatus(on and "Auto gather is ON" or "Auto gather is OFF")
 	end,
 })
-Tab:CreateToggle({
+clickToggle = ItemsTab:CreateToggle({
 	Name = "Click one = get all",
 	CurrentValue = false,
 	Flag = "t1c_clickall",
@@ -282,77 +375,12 @@ Tab:CreateToggle({
 	end,
 })
 
--- move items ----------------------------------------------------
-Tab:CreateSection("Move items")
-Tab:CreateButton({ Name = "Bring all to me", Callback = bringAll })
-Tab:CreateButton({ Name = "Put them back", Callback = restoreAll })
+ItemsTab:CreateSection("Move items")
+ItemsTab:CreateButton({ Name = "Bring all to me", Callback = bringAll })
+ItemsTab:CreateButton({ Name = "Put them back", Callback = restoreAll })
 
--- tools ---------------------------------------------------------
-Tab:CreateSection("Tools")
-local toolsInput
-toolsInput = Tab:CreateInput({
-	Name = "Tools to drop (0 = all)",
-	CurrentValue = tostring(cfg.maxTools),
-	PlaceholderText = "0",
-	RemoveTextAfterFocusLost = false,
-	Flag = "t1c_maxtools",
-	Callback = function(text)
-		local n = tonumber(text)
-		if n then cfg.maxTools = math.max(0, math.floor(n)) end
-		if toolsInput then toolsInput:Set(tostring(cfg.maxTools)) end
-	end,
-})
-Tab:CreateButton({ Name = "Drop tools", Callback = function() dropTools() end })
-
--- drop at a chosen spot ------------------------------------------
-Tab:CreateSection("Drop at a spot")
-local dropPoint, picking
-local spotLabel = Tab:CreateLabel("Spot: not set", "map-pin")
-
-local function setSpot(cf)
-	dropPoint = cf
-	local p = cf.Position
-	spotLabel:Set(("Spot: %d, %d, %d"):format(math.floor(p.X), math.floor(p.Y), math.floor(p.Z)), "map-pin")
-	setStatus("Drop spot saved")
-end
-
-Tab:CreateButton({
-	Name = "Pick spot (then click in the world)",
-	Callback = function()
-		picking = true
-		setStatus("Click anywhere in the world to set the spot")
-	end,
-})
-Tab:CreateButton({
-	Name = "Use my position as the spot",
-	Callback = function()
-		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-		if not root then setStatus("No character yet", true) return end
-		picking = false
-		setSpot(root.CFrame)
-	end,
-})
-Tab:CreateButton({
-	Name = "Drop tools at the spot",
-	Callback = function()
-		if not dropPoint then setStatus("Set a spot first", true) return end
-		dropTools(dropPoint)
-	end,
-})
-
--- the click that finishes "Pick spot" (clicks on the panel itself are ignored)
-track(game:GetService("UserInputService").InputBegan:Connect(function(input, processed)
-	if picking and not processed and input.UserInputType == Enum.UserInputType.MouseButton1 then
-		picking = false
-		local hit = player:GetMouse().Hit
-		if hit then setSpot(CFrame.new(hit.Position + Vector3.new(0, 3, 0))) end
-	end
-end))
-
--- settings ------------------------------------------------------
-Tab:CreateSection("Settings")
-local nameInput
-nameInput = Tab:CreateInput({
+ItemsTab:CreateSection("Item settings")
+nameInput = ItemsTab:CreateInput({
 	Name = "Item name",
 	CurrentValue = cfg.name,
 	PlaceholderText = "Clickypart",
@@ -363,8 +391,7 @@ nameInput = Tab:CreateInput({
 		if nameInput then nameInput:Set(cfg.name) end
 	end,
 })
-local delayInput
-delayInput = Tab:CreateInput({
+delayInput = ItemsTab:CreateInput({
 	Name = "Auto delay (sec)",
 	CurrentValue = tostring(cfg.interval),
 	PlaceholderText = "3",
@@ -377,25 +404,235 @@ delayInput = Tab:CreateInput({
 	end,
 })
 
--- status --------------------------------------------------------
-Tab:CreateSection("Status")
-local countLabel = Tab:CreateLabel("Searching...", "search")
-local statusLabel = Tab:CreateLabel("Ready", "activity")
+ItemsTab:CreateSection("Found")
+local countLabel = ItemsTab:CreateLabel("Searching...", "search")
+addStatus(ItemsTab)
+
+-- TOOLS ---------------------------------------------------------
+ToolsTab:CreateSection("Drop tools")
+toolsInput = ToolsTab:CreateInput({
+	Name = "Tools to drop (0 = all)",
+	CurrentValue = tostring(cfg.maxTools),
+	PlaceholderText = "0",
+	RemoveTextAfterFocusLost = false,
+	Flag = "t1c_maxtools",
+	Callback = function(text)
+		local n = tonumber(text)
+		if n then cfg.maxTools = math.max(0, math.floor(n)) end
+		if toolsInput then toolsInput:Set(tostring(cfg.maxTools)) end
+	end,
+})
+ToolsTab:CreateButton({ Name = "Drop tools", Callback = function() dropTools() end })
+
+-- drop at a chosen spot
+ToolsTab:CreateSection("Drop at a spot")
+local dropPoint, picking
+local spotLabel = ToolsTab:CreateLabel("Spot: not set", "map-pin")
+
+local function setSpot(cf)
+	dropPoint = cf
+	local p = cf.Position
+	spotLabel:Set(("Spot: %d, %d, %d"):format(math.floor(p.X), math.floor(p.Y), math.floor(p.Z)), "map-pin")
+	setStatus("Drop spot saved")
+end
+
+ToolsTab:CreateButton({
+	Name = "Pick spot (then click in the world)",
+	Callback = function()
+		picking = true
+		setStatus("Click anywhere in the world to set the spot")
+	end,
+})
+ToolsTab:CreateButton({
+	Name = "Use my position as the spot",
+	Callback = function()
+		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		if not root then setStatus("No character yet", true) return end
+		picking = false
+		setSpot(root.CFrame)
+	end,
+})
+ToolsTab:CreateButton({
+	Name = "Drop tools at the spot",
+	Callback = function()
+		if not dropPoint then setStatus("Set a spot first", true) return end
+		dropTools(dropPoint)
+	end,
+})
+
+-- the click that finishes "Pick spot" (clicks on the panel itself are ignored)
+track(UserInputService.InputBegan:Connect(function(input, processed)
+	if picking and not processed and input.UserInputType == Enum.UserInputType.MouseButton1 then
+		picking = false
+		local hit = player:GetMouse().Hit
+		if hit then setSpot(CFrame.new(hit.Position + Vector3.new(0, 3, 0))) end
+	end
+end))
+addStatus(ToolsTab)
+
+-- PLAYER --------------------------------------------------------
+PlayerTab:CreateSection("Movement")
+speedToggle = PlayerTab:CreateToggle({
+	Name = "Custom walk speed",
+	CurrentValue = false,
+	Flag = "t1c_speedon",
+	Callback = function(on)
+		cfg.speedOn = on
+		applyMovement()
+		setStatus(on and ("Walk speed set to " .. cfg.speed) or "Walk speed back to normal")
+	end,
+})
+speedSlider = PlayerTab:CreateSlider({
+	Name = "Walk speed",
+	Range = { 16, 250 },
+	Increment = 1,
+	Suffix = "studs/s",
+	CurrentValue = cfg.speed,
+	Flag = "t1c_speed",
+	Callback = function(v)
+		cfg.speed = v
+		applyMovement()
+	end,
+})
+jumpToggle = PlayerTab:CreateToggle({
+	Name = "Custom jump power",
+	CurrentValue = false,
+	Flag = "t1c_jumpon",
+	Callback = function(on)
+		cfg.jumpOn = on
+		applyMovement()
+		setStatus(on and ("Jump power set to " .. cfg.jump) or "Jump power back to normal")
+	end,
+})
+jumpSlider = PlayerTab:CreateSlider({
+	Name = "Jump power",
+	Range = { 50, 400 },
+	Increment = 1,
+	Suffix = "power",
+	CurrentValue = cfg.jump,
+	Flag = "t1c_jump",
+	Callback = function(v)
+		cfg.jump = v
+		applyMovement()
+	end,
+})
+
+PlayerTab:CreateSection("Abilities")
+infToggle = PlayerTab:CreateToggle({
+	Name = "Infinite jump",
+	CurrentValue = false,
+	Flag = "t1c_infjump",
+	Callback = function(on)
+		cfg.infJump = on
+		setStatus(on and "Infinite jump is ON" or "Infinite jump is OFF")
+	end,
+})
+noclipToggle = PlayerTab:CreateToggle({
+	Name = "Noclip",
+	CurrentValue = false,
+	Flag = "t1c_noclip",
+	Callback = function(on)
+		cfg.noclip = on
+		setStatus(on and "Noclip is ON" or "Noclip is OFF")
+	end,
+})
+afkToggle = PlayerTab:CreateToggle({
+	Name = "Anti-AFK",
+	CurrentValue = false,
+	Flag = "t1c_afk",
+	Callback = function(on)
+		cfg.antiAfk = on
+		setStatus(on and "Anti-AFK is ON" or "Anti-AFK is OFF")
+	end,
+})
+
+PlayerTab:CreateSection("Quick actions")
+PlayerTab:CreateButton({
+	Name = "Reset speed and jump",
+	Callback = function()
+		speedToggle:Set(false)
+		jumpToggle:Set(false)
+		setStatus("Speed and jump reset")
+	end,
+})
+addStatus(PlayerTab)
+
+-- CONFIG --------------------------------------------------------
+ConfigTab:CreateSection("Interface")
+ConfigTab:CreateDropdown({
+	Name = "Theme",
+	Options = { "Default", "Ocean", "AmberGlow", "Light", "Amethyst", "Green", "Bloom", "DarkBlue", "Serenity" },
+	CurrentOption = { "Default" },
+	MultipleOptions = false,
+	Flag = "t1c_theme",
+	Callback = function(opt)
+		local name = type(opt) == "table" and opt[1] or opt
+		-- "Default" is the custom theme with the clearer hover highlight
+		Window.ModifyTheme(name == "Default" and theme or name)
+	end,
+})
+ConfigTab:CreateToggle({
+	Name = "Pop-up for every action",
+	CurrentValue = false,
+	Flag = "t1c_notifyall",
+	Callback = function(on)
+		cfg.notifyAll = on
+		setStatus(on and "Pop-ups are ON" or "Pop-ups are OFF")
+	end,
+})
+
+ConfigTab:CreateSection("Defaults")
+ConfigTab:CreateButton({
+	Name = "Reset all settings",
+	Callback = function()
+		-- flip every control back; each one's callback updates cfg to match
+		for _, t in ipairs({ autoToggle, clickToggle, speedToggle, jumpToggle, infToggle, noclipToggle, afkToggle }) do
+			t:Set(false)
+		end
+		local d = defaultCfg()
+		nameInput:Set(d.name)
+		delayInput:Set(tostring(d.interval))
+		toolsInput:Set(tostring(d.maxTools))
+		speedSlider:Set(d.speed)
+		jumpSlider:Set(d.jump)
+		setStatus("All settings reset")
+	end,
+})
+
+ConfigTab:CreateSection("Game")
+ConfigTab:CreateButton({
+	Name = "Rejoin this server",
+	Callback = function()
+		setStatus("Rejoining...")
+		local ts = game:GetService("TeleportService")
+		if #Players:GetPlayers() <= 1 then
+			ts:Teleport(game.PlaceId, player)
+		else
+			ts:TeleportToPlaceInstance(game.PlaceId, game.JobId, player)
+		end
+	end,
+})
+
+ConfigTab:CreateSection("Danger zone")
+ConfigTab:CreateButton({ Name = "Kill UI", Callback = function() kill() end })
+addStatus(ConfigTab)
 
 setStatus = function(text, isErr)
 	if not alive then return end
-	statusLabel:Set(text, isErr and "triangle-alert" or "activity")
-	if isErr then
-		Rayfield:Notify({ Title = "RiTW Unboxed", Content = text, Duration = 4, Image = "triangle-alert" })
+	for _, l in ipairs(statusLabels) do
+		l:Set(text, isErr and "triangle-alert" or "activity")
+	end
+	if isErr or cfg.notifyAll then
+		Rayfield:Notify({
+			Title = "RiTW Unboxed", Content = text, Duration = 4,
+			Image = isErr and "triangle-alert" or "info",
+		})
 	end
 end
 
 if not fireclickdetector then
 	setStatus("No fireclickdetector: clicking is off", true)
 end
-
-Tab:CreateSection("Danger zone")
-Tab:CreateButton({ Name = "Kill UI", Callback = function() kill() end })
 
 ------------------------------------------------------------
 -- KILL UI: stop everything, put things back, reset to defaults
@@ -404,9 +641,10 @@ kill = function()
 	if not alive then return end
 	alive = false
 
-	-- reset every function to its default
+	-- reset every function to its default (and give speed/jump back to the game)
 	cfg = defaultCfg()
 	busy = false
+	pcall(applyMovement)
 
 	-- put moved items back where they were
 	pcall(restoreAll)
