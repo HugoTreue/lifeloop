@@ -1,13 +1,10 @@
 --========================================================
--- Test1Cafe: Clicky Panel v3 (client-side only)
--- Draggable (title bar), resizable (corner), RightShift hides/shows
--- "Kill UI" fully shuts everything down; running the script again
--- starts a clean new copy.
+-- Test1Cafe (client-side) - Rayfield UI edition
+-- RightShift hides/shows the window. "Kill UI" shuts everything
+-- down; running the script again starts a clean new copy.
 --========================================================
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
-local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
 
 local player = Players.LocalPlayer
 
@@ -26,7 +23,7 @@ local function defaultCfg()
 		interval = 3,        -- seconds between automatic clicks
 		clickAll = false,    -- "click one = get all"
 		auto = false,        -- "auto gather"
-		maxTools = 0,        -- how many tools "Drop all tools" drops; 0 = all
+		maxTools = 0,        -- how many tools "Drop tools" drops; 0 = all
 	}
 end
 local cfg = defaultCfg()
@@ -35,9 +32,8 @@ local saved, hooked = {}, {}
 local busy = false
 local alive = true
 local conns = {}
-local setStatus = function() end   -- replaced once the GUI exists
-local refreshDot = function() end  -- replaced once the GUI exists
-local kill                         -- defined after the GUI exists
+local setStatus = function() end -- replaced once the GUI exists
+local kill                       -- defined after the GUI exists
 
 local function track(c)
 	conns[#conns + 1] = c
@@ -114,8 +110,7 @@ local function restoreAll()
 	setStatus(("Put %d item(s) back"):format(n))
 end
 
--- drops every tool you're holding or carrying, in front of you.
--- Client-side only: the server still thinks you own them.
+-- drops the tools you're holding or carrying (up to cfg.maxTools, 0 = all)
 local function dropTools()
 	-- if the game has a "DropAllTools" RemoteEvent (see the server Script),
 	-- ask the server to do it so everyone sees it
@@ -180,493 +175,124 @@ track(Workspace.DescendantAdded:Connect(function(o)
 end))
 
 ------------------------------------------------------------
--- STYLE
+-- GUI (Rayfield)
 ------------------------------------------------------------
-local C = {
-	bg      = Color3.fromRGB(22, 23, 29),
-	title   = Color3.fromRGB(30, 31, 40),
-	card    = Color3.fromRGB(33, 35, 45),
-	cardHi  = Color3.fromRGB(40, 43, 55),
-	stroke  = Color3.fromRGB(55, 58, 74),
-	text    = Color3.fromRGB(236, 237, 243),
-	dim     = Color3.fromRGB(135, 139, 156),
-	accent  = Color3.fromRGB(88, 140, 255),
-	accentHi = Color3.fromRGB(112, 160, 255),
-	accent2 = Color3.fromRGB(160, 100, 255),
-	on      = Color3.fromRGB(70, 200, 120),
-	off     = Color3.fromRGB(70, 73, 90),
-	err     = Color3.fromRGB(240, 100, 100),
-	dangerBg = Color3.fromRGB(70, 34, 40),
-	dangerHi = Color3.fromRGB(100, 42, 50),
-}
-
-local FAST = TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-
-local function new(class, props, parent)
-	local i = Instance.new(class)
-	for k, v in pairs(props) do i[k] = v end
-	i.Parent = parent
-	return i
-end
-
-local function round(parent, r)
-	return new("UICorner", { CornerRadius = UDim.new(0, r or 8) }, parent)
-end
-
-local function stroke(parent, color, thickness)
-	return new("UIStroke", {
-		Color = color or C.stroke,
-		Thickness = thickness or 1,
-		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-	}, parent)
-end
-
-local function tween(obj, props)
-	TweenService:Create(obj, FAST, props):Play()
-end
-
-local function hover(obj, prop, normal, over)
-	obj.MouseEnter:Connect(function() tween(obj, { [prop] = over }) end)
-	obj.MouseLeave:Connect(function() tween(obj, { [prop] = normal }) end)
-end
-
-------------------------------------------------------------
--- GUI: WINDOW
-------------------------------------------------------------
-local pg = player:WaitForChild("PlayerGui")
-for _, n in ipairs({ "ClickyPanel", "ClickySwitch" }) do
-	local old = pg:FindFirstChild(n)
-	if old then old:Destroy() end
-end
-
-local gui = new("ScreenGui", { Name = "ClickyPanel", ResetOnSpawn = false }, pg)
-
-local main = new("Frame", {
-	Size = UDim2.new(0, 290, 0, 0),
-	AutomaticSize = Enum.AutomaticSize.Y,
-	Position = UDim2.new(0, 40, 0, 100),
-	BackgroundColor3 = C.bg,
-	BorderSizePixel = 0,
-}, gui)
-round(main, 12)
-stroke(main, C.stroke, 1)
-new("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder }, main)
-
--- title bar --------------------------------------------------
-local titleBar = new("Frame", {
-	Size = UDim2.new(1, 0, 0, 44),
-	BackgroundColor3 = C.title,
-	BorderSizePixel = 0,
-	LayoutOrder = 0,
-}, main)
-round(titleBar, 12)
-
-local filler = new("Frame", {
-	Size = UDim2.new(1, 0, 0, 12),
-	Position = UDim2.new(0, 0, 1, -12),
-	BackgroundColor3 = C.title,
-	BorderSizePixel = 0,
-}, titleBar)
-
-local logo = new("Frame", {
-	Size = UDim2.new(0, 26, 0, 26),
-	Position = UDim2.new(0, 12, 0.5, -13),
-	BackgroundColor3 = Color3.new(1, 1, 1),
-	BorderSizePixel = 0,
-}, titleBar)
-round(logo, 8)
-new("UIGradient", {
-	Color = ColorSequence.new(C.accent, C.accent2),
-	Rotation = 45,
-}, logo)
-new("TextLabel", {
-	Size = UDim2.new(1, 0, 1, 0),
-	BackgroundTransparency = 1,
-	Text = "C",
-	TextColor3 = Color3.new(1, 1, 1),
-	Font = Enum.Font.GothamBold,
-	TextSize = 15,
-}, logo)
-
-new("TextLabel", {
-	BackgroundTransparency = 1,
-	Position = UDim2.new(0, 46, 0, 6),
-	Size = UDim2.new(1, -150, 0, 18),
-	Text = "Test1Cafe",
-	TextColor3 = C.text,
-	Font = Enum.Font.GothamBold,
-	TextSize = 15,
-	TextXAlignment = Enum.TextXAlignment.Left,
-}, titleBar)
-new("TextLabel", {
-	BackgroundTransparency = 1,
-	Position = UDim2.new(0, 46, 0, 24),
-	Size = UDim2.new(1, -150, 0, 14),
-	Text = "client-side tools",
-	TextColor3 = C.dim,
-	Font = Enum.Font.Gotham,
-	TextSize = 11,
-	TextXAlignment = Enum.TextXAlignment.Left,
-}, titleBar)
-
-local dot = new("Frame", {
-	Size = UDim2.new(0, 8, 0, 8),
-	Position = UDim2.new(1, -96, 0.5, -4),
-	BackgroundColor3 = C.off,
-	BorderSizePixel = 0,
-}, titleBar)
-round(dot, 4)
-
-refreshDot = function()
-	tween(dot, { BackgroundColor3 = (cfg.auto or cfg.clickAll) and C.on or C.off })
-end
-
-local content = new("Frame", {
-	Size = UDim2.new(1, 0, 0, 0),
-	AutomaticSize = Enum.AutomaticSize.Y,
-	BackgroundTransparency = 1,
-	LayoutOrder = 1,
-}, main)
-new("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, content)
-new("UIPadding", {
-	PaddingTop = UDim.new(0, 4), PaddingBottom = UDim.new(0, 26),
-	PaddingLeft = UDim.new(0, 12), PaddingRight = UDim.new(0, 12),
-}, content)
-
-local function titleButton(text, xOffset, color, hoverColor, callback)
-	local b = new("TextButton", {
-		Size = UDim2.new(0, 26, 0, 26),
-		Position = UDim2.new(1, xOffset, 0.5, -13),
-		BackgroundColor3 = C.card,
-		BackgroundTransparency = 1,
-		BorderSizePixel = 0,
-		Text = text,
-		TextColor3 = color,
-		Font = Enum.Font.GothamBold,
-		TextSize = 14,
-		AutoButtonColor = false,
-	}, titleBar)
-	round(b, 7)
-	b.MouseEnter:Connect(function()
-		tween(b, { BackgroundTransparency = 0, TextColor3 = hoverColor })
-	end)
-	b.MouseLeave:Connect(function()
-		tween(b, { BackgroundTransparency = 1, TextColor3 = color })
-	end)
-	b.MouseButton1Click:Connect(callback)
-end
-titleButton("X", -36, C.dim, C.err, function() kill() end)
-titleButton("-", -66, C.dim, C.text, function()
-	content.Visible = not content.Visible
-	filler.Visible = content.Visible
+local okLoad, Rayfield = pcall(function()
+	return loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 end)
-
-------------------------------------------------------------
--- GUI: BUILDING BLOCKS
-------------------------------------------------------------
-local function header(text)
-	local row = new("Frame", {
-		Size = UDim2.new(1, 0, 0, 22), BackgroundTransparency = 1,
-	}, content)
-	-- bar + text sit at the bottom of the row so each section gets breathing room above it
-	local bar = new("Frame", {
-		Size = UDim2.new(0, 3, 0, 12), Position = UDim2.new(0, 0, 1, -14),
-		BackgroundColor3 = C.accent, BorderSizePixel = 0,
-	}, row)
-	round(bar, 2)
-	new("TextLabel", {
-		Size = UDim2.new(1, -10, 0, 14), Position = UDim2.new(0, 10, 1, -15),
-		BackgroundTransparency = 1, Text = text, TextColor3 = C.dim,
-		Font = Enum.Font.GothamBold, TextSize = 11, TextXAlignment = Enum.TextXAlignment.Left,
-	}, row)
+if not okLoad or not Rayfield then
+	warn("Test1Cafe: couldn't load Rayfield: " .. tostring(Rayfield))
+	alive = false
+	for _, c in ipairs(conns) do pcall(function() c:Disconnect() end) end
+	return
 end
 
-local function makeToggle(title, hint, callback)
-	local row = new("TextButton", {
-		Size = UDim2.new(1, 0, 0, 50), BackgroundColor3 = C.card, BorderSizePixel = 0,
-		Text = "", AutoButtonColor = false,
-	}, content)
-	round(row, 9)
-	stroke(row)
-	hover(row, "BackgroundColor3", C.card, C.cardHi)
+local Window = Rayfield:CreateWindow({
+	Name = "Test1Cafe",
+	Icon = 0,
+	LoadingTitle = "Test1Cafe",
+	LoadingSubtitle = "client-side tools",
+	ShowText = "Test1Cafe",
+	Theme = "Default",
+	ToggleUIKeybind = Enum.KeyCode.RightShift,
+	DisableRayfieldPrompts = true,
+	DisableBuildWarnings = true,
+	ConfigurationSaving = { Enabled = false },
+	KeySystem = false,
+})
 
-	new("TextLabel", {
-		BackgroundTransparency = 1, Position = UDim2.new(0, 12, 0, 7),
-		Size = UDim2.new(1, -76, 0, 18), Text = title, TextColor3 = C.text,
-		Font = Enum.Font.GothamBold, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left,
-	}, row)
-	new("TextLabel", {
-		BackgroundTransparency = 1, Position = UDim2.new(0, 12, 0, 26),
-		Size = UDim2.new(1, -76, 0, 16), Text = hint, TextColor3 = C.dim,
-		Font = Enum.Font.Gotham, TextSize = 11, TextXAlignment = Enum.TextXAlignment.Left,
-		TextTruncate = Enum.TextTruncate.AtEnd,
-	}, row)
+local Tab = Window:CreateTab("Main", "layout-dashboard")
 
-	local pill = new("Frame", {
-		Size = UDim2.new(0, 42, 0, 24), Position = UDim2.new(1, -54, 0.5, -12),
-		BackgroundColor3 = C.off, BorderSizePixel = 0,
-	}, row)
-	round(pill, 12)
-	local knob = new("Frame", {
-		Size = UDim2.new(0, 18, 0, 18), Position = UDim2.new(0, 3, 0.5, -9),
-		BackgroundColor3 = Color3.new(1, 1, 1), BorderSizePixel = 0,
-	}, pill)
-	round(knob, 9)
+-- automation ----------------------------------------------------
+Tab:CreateSection("Automation")
+Tab:CreateToggle({
+	Name = "Auto gather",
+	CurrentValue = false,
+	Flag = "t1c_auto",
+	Callback = function(on)
+		cfg.auto = on
+		setStatus(on and "Auto gather is ON" or "Auto gather is OFF")
+	end,
+})
+Tab:CreateToggle({
+	Name = "Click one = get all",
+	CurrentValue = false,
+	Flag = "t1c_clickall",
+	Callback = function(on)
+		cfg.clickAll = on
+		setStatus(on and "Click one = get all is ON" or "Click one = get all is OFF")
+	end,
+})
 
-	local state = false
-	row.MouseButton1Click:Connect(function()
-		state = not state
-		tween(pill, { BackgroundColor3 = state and C.on or C.off })
-		tween(knob, { Position = state and UDim2.new(0, 21, 0.5, -9) or UDim2.new(0, 3, 0.5, -9) })
-		callback(state)
-		refreshDot()
-	end)
-end
+-- move items ----------------------------------------------------
+Tab:CreateSection("Move items")
+Tab:CreateButton({ Name = "Bring all to me", Callback = bringAll })
+Tab:CreateButton({ Name = "Put them back", Callback = restoreAll })
 
-local function makeButtons(a, b)
-	local row = new("Frame", {
-		Size = UDim2.new(1, 0, 0, 36), BackgroundTransparency = 1,
-	}, content)
-	new("UIListLayout", {
-		FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 8),
-	}, row)
+-- tools ---------------------------------------------------------
+Tab:CreateSection("Tools")
+local toolsInput
+toolsInput = Tab:CreateInput({
+	Name = "Tools to drop (0 = all)",
+	CurrentValue = tostring(cfg.maxTools),
+	PlaceholderText = "0",
+	RemoveTextAfterFocusLost = false,
+	Flag = "t1c_maxtools",
+	Callback = function(text)
+		local n = tonumber(text)
+		if n then cfg.maxTools = math.max(0, math.floor(n)) end
+		if toolsInput then toolsInput:Set(tostring(cfg.maxTools)) end
+	end,
+})
+Tab:CreateButton({ Name = "Drop tools", Callback = dropTools })
 
-	local primary = new("TextButton", {
-		Size = UDim2.new(0.5, -4, 1, 0), BackgroundColor3 = C.accent, BorderSizePixel = 0,
-		Text = a[1], TextColor3 = Color3.new(1, 1, 1), AutoButtonColor = false,
-		Font = Enum.Font.GothamBold, TextSize = 13,
-	}, row)
-	round(primary, 9)
-	hover(primary, "BackgroundColor3", C.accent, C.accentHi)
-	primary.MouseButton1Click:Connect(a[2])
+-- settings ------------------------------------------------------
+Tab:CreateSection("Settings")
+local nameInput
+nameInput = Tab:CreateInput({
+	Name = "Item name",
+	CurrentValue = cfg.name,
+	PlaceholderText = "Clickypart",
+	RemoveTextAfterFocusLost = false,
+	Flag = "t1c_itemname",
+	Callback = function(text)
+		if text ~= "" then cfg.name = text end
+		if nameInput then nameInput:Set(cfg.name) end
+	end,
+})
+local delayInput
+delayInput = Tab:CreateInput({
+	Name = "Auto delay (sec)",
+	CurrentValue = tostring(cfg.interval),
+	PlaceholderText = "3",
+	RemoveTextAfterFocusLost = false,
+	Flag = "t1c_delay",
+	Callback = function(text)
+		local n = tonumber(text)
+		if n then cfg.interval = math.max(0.5, n) end
+		if delayInput then delayInput:Set(tostring(cfg.interval)) end
+	end,
+})
 
-	local secondary = new("TextButton", {
-		Size = UDim2.new(0.5, -4, 1, 0), BackgroundColor3 = C.card, BorderSizePixel = 0,
-		Text = b[1], TextColor3 = C.text, AutoButtonColor = false,
-		Font = Enum.Font.GothamBold, TextSize = 13,
-	}, row)
-	round(secondary, 9)
-	stroke(secondary)
-	hover(secondary, "BackgroundColor3", C.card, C.cardHi)
-	secondary.MouseButton1Click:Connect(b[2])
-end
-
--- full-width button; style = "normal" or "danger"
-local function makeWide(text, style, callback)
-	local danger = style == "danger"
-	-- danger = quiet outlined button that only fills in red on hover
-	local base = danger and C.bg or C.card
-	local over = danger and C.dangerBg or C.cardHi
-	local btn = new("TextButton", {
-		Size = UDim2.new(1, 0, 0, danger and 32 or 36), BackgroundColor3 = base, BorderSizePixel = 0,
-		Text = text, TextColor3 = danger and C.err or C.text, AutoButtonColor = false,
-		Font = Enum.Font.GothamBold, TextSize = 13,
-	}, content)
-	round(btn, 9)
-	stroke(btn, danger and C.dangerHi or C.stroke)
-	hover(btn, "BackgroundColor3", base, over)
-	btn.MouseButton1Click:Connect(callback)
-	return btn
-end
-
-local function makeInput(label, default, callback)
-	local row = new("Frame", {
-		Size = UDim2.new(1, 0, 0, 38), BackgroundColor3 = C.card, BorderSizePixel = 0,
-	}, content)
-	round(row, 9)
-	stroke(row)
-	new("TextLabel", {
-		BackgroundTransparency = 1, Position = UDim2.new(0, 12, 0, 0),
-		Size = UDim2.new(1, -140, 1, 0), Text = label, TextColor3 = C.text,
-		Font = Enum.Font.GothamMedium, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left,
-	}, row)
-	local box = new("TextBox", {
-		Size = UDim2.new(0, 112, 0, 26), Position = UDim2.new(1, -122, 0.5, -13),
-		BackgroundColor3 = C.bg, BorderSizePixel = 0, Text = tostring(default),
-		TextColor3 = C.text, Font = Enum.Font.Gotham, TextSize = 13, ClearTextOnFocus = false,
-		PlaceholderText = "...", PlaceholderColor3 = C.dim,
-	}, row)
-	round(box, 7)
-	local s = stroke(box, C.stroke, 1)
-	box.Focused:Connect(function() tween(s, { Color = C.accent }) end)
-	box.FocusLost:Connect(function()
-		tween(s, { Color = C.stroke })
-		box.Text = tostring(callback(box.Text))
-	end)
-end
-
-------------------------------------------------------------
--- GUI: CONTENT
-------------------------------------------------------------
-header("AUTOMATION")
-makeToggle("Auto gather", "Clicks every item for you", function(on)
-	cfg.auto = on
-	setStatus(on and "Auto gather is ON" or "Auto gather is OFF")
-end)
-makeToggle("Click one = get all", "Click one item, all fire", function(on)
-	cfg.clickAll = on
-	setStatus(on and "Click one = get all is ON" or "Click one = get all is OFF")
-end)
-
-header("MOVE ITEMS")
-makeButtons({ "Bring all to me", bringAll }, { "Put them back", restoreAll })
-
-header("TOOLS")
-makeInput("Tools to drop (0 = all)", cfg.maxTools, function(text)
-	local n = tonumber(text)
-	if n then cfg.maxTools = math.max(0, math.floor(n)) end
-	return cfg.maxTools
-end)
-makeWide("Drop tools", "normal", dropTools)
-
-header("SETTINGS")
-makeInput("Item name", cfg.name, function(text)
-	if text ~= "" then cfg.name = text end
-	return cfg.name
-end)
-makeInput("Auto delay (sec)", cfg.interval, function(text)
-	local n = tonumber(text)
-	if n then cfg.interval = math.max(0.5, n) end
-	return cfg.interval
-end)
-
--- footer card: item counter + status line
-local footer = new("Frame", {
-	Size = UDim2.new(1, 0, 0, 58), BackgroundColor3 = C.card, BorderSizePixel = 0,
-}, content)
-round(footer, 9)
-stroke(footer)
-
--- plain text (no RichText), so no stray <b> tags can show up
-local countLabel = new("TextLabel", {
-	BackgroundTransparency = 1, Position = UDim2.new(0, 12, 0, 8),
-	Size = UDim2.new(1, -24, 0, 16), Text = "Searching...",
-	TextColor3 = C.text, Font = Enum.Font.GothamMedium, TextSize = 12,
-	TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd,
-}, footer)
-
--- thin divider between the counter and the status line
-new("Frame", {
-	Size = UDim2.new(1, -24, 0, 1), Position = UDim2.new(0, 12, 0, 29),
-	BackgroundColor3 = C.stroke, BorderSizePixel = 0,
-}, footer)
-
-local statusDot = new("Frame", {
-	Size = UDim2.new(0, 6, 0, 6), Position = UDim2.new(0, 12, 0, 41),
-	BackgroundColor3 = C.on, BorderSizePixel = 0,
-}, footer)
-round(statusDot, 3)
-
-local statusLabel = new("TextLabel", {
-	BackgroundTransparency = 1, Position = UDim2.new(0, 24, 0, 36),
-	Size = UDim2.new(1, -36, 0, 16), Text = "Ready",
-	TextColor3 = C.dim, Font = Enum.Font.Gotham, TextSize = 12,
-	TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd,
-}, footer)
-
-makeWide("Kill UI", "danger", function() kill() end)
-
--- hint lives below the buttons, not inside the footer card
-new("TextLabel", {
-	Size = UDim2.new(1, -24, 0, 12), BackgroundTransparency = 1,
-	Text = "RightShift hides  •  drag the corner to resize",
-	TextColor3 = C.dim, Font = Enum.Font.Gotham, TextSize = 10,
-}, content)
+-- status --------------------------------------------------------
+Tab:CreateSection("Status")
+local countLabel = Tab:CreateLabel("Searching...", "search")
+local statusLabel = Tab:CreateLabel("Ready", "activity")
 
 setStatus = function(text, isErr)
-	statusLabel.Text = text
-	statusLabel.TextColor3 = isErr and C.err or C.text
-	tween(statusDot, { BackgroundColor3 = isErr and C.err or C.on })
+	if not alive then return end
+	statusLabel:Set(text, isErr and "triangle-alert" or "activity")
+	if isErr then
+		Rayfield:Notify({ Title = "Test1Cafe", Content = text, Duration = 4, Image = "triangle-alert" })
+	end
 end
 
 if not fireclickdetector then
 	setStatus("No fireclickdetector: clicking is off", true)
 end
 
-------------------------------------------------------------
--- DRAGGING (title bar) and hotkey
-------------------------------------------------------------
-local dragging, dragStart, startPos
-titleBar.InputBegan:Connect(function(i)
-	if i.UserInputType == Enum.UserInputType.MouseButton1
-		or i.UserInputType == Enum.UserInputType.Touch then
-		dragging, dragStart, startPos = true, i.Position, main.Position
-	end
-end)
-track(UserInputService.InputChanged:Connect(function(i)
-	if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement
-		or i.UserInputType == Enum.UserInputType.Touch) then
-		local d = i.Position - dragStart
-		main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X,
-			startPos.Y.Scale, startPos.Y.Offset + d.Y)
-	end
-end))
-track(UserInputService.InputEnded:Connect(function(i)
-	if i.UserInputType == Enum.UserInputType.MouseButton1
-		or i.UserInputType == Enum.UserInputType.Touch then
-		dragging = false
-	end
-end))
-track(UserInputService.InputBegan:Connect(function(i, processed)
-	if not processed and i.KeyCode == Enum.KeyCode.RightShift then
-		main.Visible = not main.Visible
-	end
-end))
-
-------------------------------------------------------------
--- RESIZE (drag the corner grip)
-------------------------------------------------------------
-local BASE_WIDTH = 290
-local MIN_SCALE, MAX_SCALE = 0.6, 2.5
-
-local uiScale = new("UIScale", { Scale = 1 }, main)
-
-local handle = new("TextButton", {
-	Size = UDim2.new(0, 22, 0, 22),
-	BackgroundTransparency = 1,
-	BorderSizePixel = 0,
-	Text = "◢",
-	TextColor3 = C.dim,
-	TextSize = 13,
-	Font = Enum.Font.GothamBold,
-	AutoButtonColor = false,
-	ZIndex = 10,
-}, gui)
-handle.MouseEnter:Connect(function() tween(handle, { TextColor3 = C.accent }) end)
-handle.MouseLeave:Connect(function() tween(handle, { TextColor3 = C.dim }) end)
-
-local function placeHandle()
-	handle.Position = UDim2.fromOffset(
-		main.AbsolutePosition.X + main.AbsoluteSize.X - 22,
-		main.AbsolutePosition.Y + main.AbsoluteSize.Y - 22
-	)
-	handle.Visible = main.Visible
-end
-main:GetPropertyChangedSignal("AbsolutePosition"):Connect(placeHandle)
-main:GetPropertyChangedSignal("AbsoluteSize"):Connect(placeHandle)
-main:GetPropertyChangedSignal("Visible"):Connect(placeHandle)
-placeHandle()
-
-local resizing, rStart, rScale
-handle.InputBegan:Connect(function(i)
-	if i.UserInputType == Enum.UserInputType.MouseButton1
-		or i.UserInputType == Enum.UserInputType.Touch then
-		resizing, rStart, rScale = true, i.Position, uiScale.Scale
-	end
-end)
-track(UserInputService.InputChanged:Connect(function(i)
-	if resizing and (i.UserInputType == Enum.UserInputType.MouseMovement
-		or i.UserInputType == Enum.UserInputType.Touch) then
-		local dx = i.Position.X - rStart.X
-		uiScale.Scale = math.clamp(rScale + dx / BASE_WIDTH, MIN_SCALE, MAX_SCALE)
-	end
-end))
-track(UserInputService.InputEnded:Connect(function(i)
-	if i.UserInputType == Enum.UserInputType.MouseButton1
-		or i.UserInputType == Enum.UserInputType.Touch then
-		resizing = false
-	end
-end))
+Tab:CreateSection("Danger zone")
+Tab:CreateButton({ Name = "Kill UI", Callback = function() kill() end })
 
 ------------------------------------------------------------
 -- KILL UI: stop everything, put things back, reset to defaults
@@ -689,7 +315,7 @@ kill = function()
 	conns = {}
 	hooked = {}
 
-	if gui then gui:Destroy() end
+	pcall(function() Rayfield:Destroy() end)
 	if env.Test1CafeKill == kill then env.Test1CafeKill = nil end
 end
 env.Test1CafeKill = kill
@@ -709,9 +335,7 @@ end)
 
 task.spawn(function() -- item counter
 	while alive do
-		if content.Visible then
-			countLabel.Text = ('%d item(s) named "%s"'):format(#findParts(), cfg.name)
-		end
+		countLabel:Set(('%d item(s) named "%s"'):format(#findParts(), cfg.name), "search")
 		task.wait(3)
 	end
 end)
