@@ -1,5 +1,6 @@
 --========================================================
--- Test1Cafe: Clicky Panel (client-side only, draggable + resizable)
+-- Test1Cafe: Clicky Panel v2 (client-side only)
+-- Draggable (title bar), resizable (corner), RightShift hides/shows
 --========================================================
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
@@ -12,14 +13,15 @@ local player = Players.LocalPlayer
 -- STATE
 ------------------------------------------------------------
 local cfg = {
-	name = "Clickypart",
-	interval = 3,
-	clickAll = false,
-	auto = false,
+	name = "Clickypart", -- name of the parts to work with
+	interval = 3,        -- seconds between automatic clicks
+	clickAll = false,    -- "click one = get all"
+	auto = false,        -- "auto gather"
 }
 local saved, hooked = {}, {}
 local busy = false
-local setStatus = function() end
+local setStatus = function() end   -- replaced once the GUI exists
+local refreshDot = function() end  -- replaced once the GUI exists
 
 ------------------------------------------------------------
 -- LOGIC
@@ -109,19 +111,25 @@ Workspace.DescendantAdded:Connect(function(o)
 end)
 
 ------------------------------------------------------------
--- GUI HELPERS
+-- STYLE
 ------------------------------------------------------------
 local C = {
-	bg = Color3.fromRGB(28, 29, 36),
-	title = Color3.fromRGB(40, 42, 54),
-	row = Color3.fromRGB(40, 42, 52),
-	text = Color3.fromRGB(235, 235, 240),
-	dim = Color3.fromRGB(150, 153, 165),
-	accent = Color3.fromRGB(70, 130, 240),
-	on = Color3.fromRGB(60, 180, 100),
-	off = Color3.fromRGB(80, 82, 95),
-	err = Color3.fromRGB(240, 110, 110),
+	bg      = Color3.fromRGB(22, 23, 29),
+	title   = Color3.fromRGB(30, 31, 40),
+	card    = Color3.fromRGB(33, 35, 45),
+	cardHi  = Color3.fromRGB(40, 43, 55),
+	stroke  = Color3.fromRGB(55, 58, 74),
+	text    = Color3.fromRGB(236, 237, 243),
+	dim     = Color3.fromRGB(135, 139, 156),
+	accent  = Color3.fromRGB(88, 140, 255),
+	accentHi = Color3.fromRGB(112, 160, 255),
+	accent2 = Color3.fromRGB(160, 100, 255),
+	on      = Color3.fromRGB(70, 200, 120),
+	off     = Color3.fromRGB(70, 73, 90),
+	err     = Color3.fromRGB(240, 100, 100),
 }
+
+local FAST = TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 
 local function new(class, props, parent)
 	local i = Instance.new(class)
@@ -131,11 +139,29 @@ local function new(class, props, parent)
 end
 
 local function round(parent, r)
-	new("UICorner", { CornerRadius = UDim.new(0, r or 8) }, parent)
+	return new("UICorner", { CornerRadius = UDim.new(0, r or 8) }, parent)
+end
+
+local function stroke(parent, color, thickness)
+	return new("UIStroke", {
+		Color = color or C.stroke,
+		Thickness = thickness or 1,
+		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+	}, parent)
+end
+
+local function tween(obj, props)
+	TweenService:Create(obj, FAST, props):Play()
+end
+
+-- smooth color change on hover
+local function hover(obj, prop, normal, over)
+	obj.MouseEnter:Connect(function() tween(obj, { [prop] = over }) end)
+	obj.MouseLeave:Connect(function() tween(obj, { [prop] = normal }) end)
 end
 
 ------------------------------------------------------------
--- GUI
+-- GUI: WINDOW
 ------------------------------------------------------------
 local pg = player:WaitForChild("PlayerGui")
 for _, n in ipairs({ "ClickyPanel", "ClickySwitch" }) do
@@ -146,33 +172,86 @@ end
 local gui = new("ScreenGui", { Name = "ClickyPanel", ResetOnSpawn = false }, pg)
 
 local main = new("Frame", {
-	Size = UDim2.new(0, 270, 0, 0),
+	Size = UDim2.new(0, 290, 0, 0),
 	AutomaticSize = Enum.AutomaticSize.Y,
 	Position = UDim2.new(0, 40, 0, 100),
 	BackgroundColor3 = C.bg,
 	BorderSizePixel = 0,
 }, gui)
-round(main, 10)
+round(main, 12)
+stroke(main, C.stroke, 1)
 new("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder }, main)
 
+-- title bar --------------------------------------------------
 local titleBar = new("Frame", {
-	Size = UDim2.new(1, 0, 0, 34),
+	Size = UDim2.new(1, 0, 0, 44),
 	BackgroundColor3 = C.title,
 	BorderSizePixel = 0,
 	LayoutOrder = 0,
 }, main)
-round(titleBar, 10)
+round(titleBar, 12)
+
+-- squares off the bottom corners while the panel is open
+local filler = new("Frame", {
+	Size = UDim2.new(1, 0, 0, 12),
+	Position = UDim2.new(0, 0, 1, -12),
+	BackgroundColor3 = C.title,
+	BorderSizePixel = 0,
+}, titleBar)
+
+local logo = new("Frame", {
+	Size = UDim2.new(0, 26, 0, 26),
+	Position = UDim2.new(0, 12, 0.5, -13),
+	BackgroundColor3 = Color3.new(1, 1, 1),
+	BorderSizePixel = 0,
+}, titleBar)
+round(logo, 8)
+new("UIGradient", {
+	Color = ColorSequence.new(C.accent, C.accent2),
+	Rotation = 45,
+}, logo)
+new("TextLabel", {
+	Size = UDim2.new(1, 0, 1, 0),
+	BackgroundTransparency = 1,
+	Text = "C",
+	TextColor3 = Color3.new(1, 1, 1),
+	Font = Enum.Font.GothamBold,
+	TextSize = 15,
+}, logo)
 
 new("TextLabel", {
 	BackgroundTransparency = 1,
-	Position = UDim2.new(0, 12, 0, 0),
-	Size = UDim2.new(1, -80, 1, 0),
-	Text = "Clicky Panel",
+	Position = UDim2.new(0, 46, 0, 6),
+	Size = UDim2.new(1, -150, 0, 18),
+	Text = "Test1Cafe",
 	TextColor3 = C.text,
 	Font = Enum.Font.GothamBold,
 	TextSize = 15,
 	TextXAlignment = Enum.TextXAlignment.Left,
 }, titleBar)
+new("TextLabel", {
+	BackgroundTransparency = 1,
+	Position = UDim2.new(0, 46, 0, 24),
+	Size = UDim2.new(1, -150, 0, 14),
+	Text = "client-side tools",
+	TextColor3 = C.dim,
+	Font = Enum.Font.Gotham,
+	TextSize = 11,
+	TextXAlignment = Enum.TextXAlignment.Left,
+}, titleBar)
+
+-- little dot that lights up while anything is running
+local dot = new("Frame", {
+	Size = UDim2.new(0, 8, 0, 8),
+	Position = UDim2.new(1, -96, 0.5, -4),
+	BackgroundColor3 = C.off,
+	BorderSizePixel = 0,
+}, titleBar)
+round(dot, 4)
+
+refreshDot = function()
+	tween(dot, { BackgroundColor3 = (cfg.auto or cfg.clickAll) and C.on or C.off })
+end
 
 local content = new("Frame", {
 	Size = UDim2.new(1, 0, 0, 0),
@@ -182,118 +261,156 @@ local content = new("Frame", {
 }, main)
 new("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }, content)
 new("UIPadding", {
-	PaddingTop = UDim.new(0, 10), PaddingBottom = UDim.new(0, 10),
-	PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10),
+	PaddingTop = UDim.new(0, 12), PaddingBottom = UDim.new(0, 14),
+	PaddingLeft = UDim.new(0, 12), PaddingRight = UDim.new(0, 12),
 }, content)
 
-local function titleButton(text, xOffset, color, callback)
+local function titleButton(text, xOffset, color, hoverColor, callback)
 	local b = new("TextButton", {
-		Size = UDim2.new(0, 30, 1, 0),
-		Position = UDim2.new(1, xOffset, 0, 0),
+		Size = UDim2.new(0, 26, 0, 26),
+		Position = UDim2.new(1, xOffset, 0.5, -13),
+		BackgroundColor3 = C.card,
 		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
 		Text = text,
 		TextColor3 = color,
 		Font = Enum.Font.GothamBold,
-		TextSize = 16,
+		TextSize = 14,
+		AutoButtonColor = false,
 	}, titleBar)
+	round(b, 7)
+	b.MouseEnter:Connect(function()
+		tween(b, { BackgroundTransparency = 0, TextColor3 = hoverColor })
+	end)
+	b.MouseLeave:Connect(function()
+		tween(b, { BackgroundTransparency = 1, TextColor3 = color })
+	end)
 	b.MouseButton1Click:Connect(callback)
 end
-titleButton("X", -32, C.err, function() gui:Destroy() end)
-titleButton("-", -62, C.dim, function() content.Visible = not content.Visible end)
+titleButton("X", -36, C.dim, C.err, function() gui:Destroy() end)
+titleButton("-", -66, C.dim, C.text, function()
+	content.Visible = not content.Visible
+	filler.Visible = content.Visible
+end)
 
+------------------------------------------------------------
+-- GUI: BUILDING BLOCKS
+------------------------------------------------------------
 local function header(text)
-	new("TextLabel", {
-		Size = UDim2.new(1, 0, 0, 14),
-		BackgroundTransparency = 1,
-		Text = text,
-		TextColor3 = C.dim,
-		Font = Enum.Font.GothamBold,
-		TextSize = 11,
-		TextXAlignment = Enum.TextXAlignment.Left,
+	local row = new("Frame", {
+		Size = UDim2.new(1, 0, 0, 16), BackgroundTransparency = 1,
 	}, content)
+	local bar = new("Frame", {
+		Size = UDim2.new(0, 3, 0, 12), Position = UDim2.new(0, 0, 0.5, -6),
+		BackgroundColor3 = C.accent, BorderSizePixel = 0,
+	}, row)
+	round(bar, 2)
+	new("TextLabel", {
+		Size = UDim2.new(1, -10, 1, 0), Position = UDim2.new(0, 10, 0, 0),
+		BackgroundTransparency = 1, Text = text, TextColor3 = C.dim,
+		Font = Enum.Font.GothamBold, TextSize = 11, TextXAlignment = Enum.TextXAlignment.Left,
+	}, row)
 end
 
 local function makeToggle(title, hint, callback)
-	local row = new("Frame", {
-		Size = UDim2.new(1, 0, 0, 46), BackgroundColor3 = C.row, BorderSizePixel = 0,
+	local row = new("TextButton", {
+		Size = UDim2.new(1, 0, 0, 50), BackgroundColor3 = C.card, BorderSizePixel = 0,
+		Text = "", AutoButtonColor = false,
 	}, content)
-	round(row)
+	round(row, 9)
+	stroke(row)
+	hover(row, "BackgroundColor3", C.card, C.cardHi)
+
 	new("TextLabel", {
-		BackgroundTransparency = 1, Position = UDim2.new(0, 10, 0, 5),
-		Size = UDim2.new(1, -70, 0, 18), Text = title, TextColor3 = C.text,
+		BackgroundTransparency = 1, Position = UDim2.new(0, 12, 0, 7),
+		Size = UDim2.new(1, -76, 0, 18), Text = title, TextColor3 = C.text,
 		Font = Enum.Font.GothamBold, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left,
 	}, row)
 	new("TextLabel", {
-		BackgroundTransparency = 1, Position = UDim2.new(0, 10, 0, 24),
-		Size = UDim2.new(1, -70, 0, 16), Text = hint, TextColor3 = C.dim,
+		BackgroundTransparency = 1, Position = UDim2.new(0, 12, 0, 26),
+		Size = UDim2.new(1, -76, 0, 16), Text = hint, TextColor3 = C.dim,
 		Font = Enum.Font.Gotham, TextSize = 11, TextXAlignment = Enum.TextXAlignment.Left,
 		TextTruncate = Enum.TextTruncate.AtEnd,
 	}, row)
 
-	local pill = new("TextButton", {
-		Text = "", AutoButtonColor = false, Size = UDim2.new(0, 40, 0, 22),
-		Position = UDim2.new(1, -50, 0.5, -11), BackgroundColor3 = C.off, BorderSizePixel = 0,
+	local pill = new("Frame", {
+		Size = UDim2.new(0, 42, 0, 24), Position = UDim2.new(1, -54, 0.5, -12),
+		BackgroundColor3 = C.off, BorderSizePixel = 0,
 	}, row)
-	round(pill, 11)
+	round(pill, 12)
 	local knob = new("Frame", {
-		Size = UDim2.new(0, 16, 0, 16), Position = UDim2.new(0, 3, 0.5, -8),
+		Size = UDim2.new(0, 18, 0, 18), Position = UDim2.new(0, 3, 0.5, -9),
 		BackgroundColor3 = Color3.new(1, 1, 1), BorderSizePixel = 0,
 	}, pill)
-	round(knob, 8)
+	round(knob, 9)
 
 	local state = false
-	pill.MouseButton1Click:Connect(function()
+	row.MouseButton1Click:Connect(function()
 		state = not state
-		local info = TweenInfo.new(0.12)
-		TweenService:Create(pill, info, { BackgroundColor3 = state and C.on or C.off }):Play()
-		TweenService:Create(knob, info, {
-			Position = state and UDim2.new(0, 21, 0.5, -8) or UDim2.new(0, 3, 0.5, -8),
-		}):Play()
+		tween(pill, { BackgroundColor3 = state and C.on or C.off })
+		tween(knob, { Position = state and UDim2.new(0, 21, 0.5, -9) or UDim2.new(0, 3, 0.5, -9) })
 		callback(state)
+		refreshDot()
 	end)
 end
 
 local function makeButtons(a, b)
 	local row = new("Frame", {
-		Size = UDim2.new(1, 0, 0, 34), BackgroundTransparency = 1,
+		Size = UDim2.new(1, 0, 0, 36), BackgroundTransparency = 1,
 	}, content)
 	new("UIListLayout", {
 		FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 8),
 	}, row)
-	for _, def in ipairs({ a, b }) do
-		local btn = new("TextButton", {
-			Size = UDim2.new(0.5, -4, 1, 0), BackgroundColor3 = C.accent, BorderSizePixel = 0,
-			Text = def[1], TextColor3 = Color3.new(1, 1, 1),
-			Font = Enum.Font.GothamBold, TextSize = 13,
-		}, row)
-		round(btn, 8)
-		btn.MouseButton1Click:Connect(def[2])
-	end
+
+	-- a = primary (filled), b = secondary (outlined)
+	local primary = new("TextButton", {
+		Size = UDim2.new(0.5, -4, 1, 0), BackgroundColor3 = C.accent, BorderSizePixel = 0,
+		Text = a[1], TextColor3 = Color3.new(1, 1, 1), AutoButtonColor = false,
+		Font = Enum.Font.GothamBold, TextSize = 13,
+	}, row)
+	round(primary, 9)
+	hover(primary, "BackgroundColor3", C.accent, C.accentHi)
+	primary.MouseButton1Click:Connect(a[2])
+
+	local secondary = new("TextButton", {
+		Size = UDim2.new(0.5, -4, 1, 0), BackgroundColor3 = C.card, BorderSizePixel = 0,
+		Text = b[1], TextColor3 = C.text, AutoButtonColor = false,
+		Font = Enum.Font.GothamBold, TextSize = 13,
+	}, row)
+	round(secondary, 9)
+	stroke(secondary)
+	hover(secondary, "BackgroundColor3", C.card, C.cardHi)
+	secondary.MouseButton1Click:Connect(b[2])
 end
 
 local function makeInput(label, default, callback)
 	local row = new("Frame", {
-		Size = UDim2.new(1, 0, 0, 34), BackgroundColor3 = C.row, BorderSizePixel = 0,
+		Size = UDim2.new(1, 0, 0, 38), BackgroundColor3 = C.card, BorderSizePixel = 0,
 	}, content)
-	round(row)
+	round(row, 9)
+	stroke(row)
 	new("TextLabel", {
-		BackgroundTransparency = 1, Position = UDim2.new(0, 10, 0, 0),
-		Size = UDim2.new(1, -130, 1, 0), Text = label, TextColor3 = C.text,
-		Font = Enum.Font.Gotham, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left,
+		BackgroundTransparency = 1, Position = UDim2.new(0, 12, 0, 0),
+		Size = UDim2.new(1, -140, 1, 0), Text = label, TextColor3 = C.text,
+		Font = Enum.Font.GothamMedium, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left,
 	}, row)
 	local box = new("TextBox", {
-		Size = UDim2.new(0, 110, 0, 24), Position = UDim2.new(1, -120, 0.5, -12),
+		Size = UDim2.new(0, 112, 0, 26), Position = UDim2.new(1, -122, 0.5, -13),
 		BackgroundColor3 = C.bg, BorderSizePixel = 0, Text = tostring(default),
 		TextColor3 = C.text, Font = Enum.Font.Gotham, TextSize = 13, ClearTextOnFocus = false,
+		PlaceholderText = "...", PlaceholderColor3 = C.dim,
 	}, row)
-	round(box, 6)
+	round(box, 7)
+	local s = stroke(box, C.stroke, 1)
+	box.Focused:Connect(function() tween(s, { Color = C.accent }) end)
 	box.FocusLost:Connect(function()
+		tween(s, { Color = C.stroke })
 		box.Text = tostring(callback(box.Text))
 	end)
 end
 
 ------------------------------------------------------------
--- PANEL CONTENT
+-- GUI: CONTENT
 ------------------------------------------------------------
 header("AUTOMATION")
 makeToggle("Auto gather", "Clicks every item for you", function(on)
@@ -319,29 +436,53 @@ makeInput("Auto delay (sec)", cfg.interval, function(text)
 	return cfg.interval
 end)
 
-local countLabel = new("TextLabel", {
-	Size = UDim2.new(1, 0, 0, 16), BackgroundTransparency = 1, Text = "Found: ...",
-	TextColor3 = C.text, Font = Enum.Font.GothamBold, TextSize = 12,
-	TextXAlignment = Enum.TextXAlignment.Left,
+-- footer card: item counter + status line
+local footer = new("Frame", {
+	Size = UDim2.new(1, 0, 0, 64), BackgroundColor3 = C.card, BorderSizePixel = 0,
 }, content)
+round(footer, 9)
+stroke(footer)
+
+local countLabel = new("TextLabel", {
+	BackgroundTransparency = 1, Position = UDim2.new(0, 12, 0, 7),
+	Size = UDim2.new(1, -24, 0, 16), Text = "Found: ...", RichText = true,
+	TextColor3 = C.text, Font = Enum.Font.GothamMedium, TextSize = 12,
+	TextXAlignment = Enum.TextXAlignment.Left,
+}, footer)
+
+local statusDot = new("Frame", {
+	Size = UDim2.new(0, 6, 0, 6), Position = UDim2.new(0, 12, 0, 33),
+	BackgroundColor3 = C.on, BorderSizePixel = 0,
+}, footer)
+round(statusDot, 3)
 
 local statusLabel = new("TextLabel", {
-	Size = UDim2.new(1, 0, 0, 30), BackgroundTransparency = 1, Text = "Ready",
-	TextColor3 = C.dim, Font = Enum.Font.Gotham, TextSize = 12, TextWrapped = true,
-	TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top,
-}, content)
+	BackgroundTransparency = 1, Position = UDim2.new(0, 24, 0, 28),
+	Size = UDim2.new(1, -36, 0, 16), Text = "Ready",
+	TextColor3 = C.dim, Font = Enum.Font.Gotham, TextSize = 12,
+	TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd,
+}, footer)
+
+new("TextLabel", {
+	BackgroundTransparency = 1, Position = UDim2.new(0, 12, 1, -18),
+	Size = UDim2.new(1, -24, 0, 12),
+	Text = "RightShift hides  |  drag corner to resize",
+	TextColor3 = C.dim, Font = Enum.Font.Gotham, TextSize = 10,
+	TextXAlignment = Enum.TextXAlignment.Left,
+}, footer)
 
 setStatus = function(text, isErr)
 	statusLabel.Text = text
-	statusLabel.TextColor3 = isErr and C.err or C.dim
+	statusLabel.TextColor3 = isErr and C.err or C.text
+	tween(statusDot, { BackgroundColor3 = isErr and C.err or C.on })
 end
 
 if not fireclickdetector then
-	setStatus("Warning: no fireclickdetector. Auto gather and click-all can't click.", true)
+	setStatus("No fireclickdetector: clicking is off", true)
 end
 
 ------------------------------------------------------------
--- DRAGGING (title bar) and hotkey (RightShift hides/shows)
+-- DRAGGING (title bar) and hotkey
 ------------------------------------------------------------
 local dragging, dragStart, startPos
 titleBar.InputBegan:Connect(function(i)
@@ -371,26 +512,26 @@ UserInputService.InputBegan:Connect(function(i, processed)
 end)
 
 ------------------------------------------------------------
--- RESIZE (drag the corner handle)
+-- RESIZE (drag the corner grip)
 ------------------------------------------------------------
-local BASE_WIDTH = 270
+local BASE_WIDTH = 290
 local MIN_SCALE, MAX_SCALE = 0.6, 2.5
 
 local uiScale = new("UIScale", { Scale = 1 }, main)
 
 local handle = new("TextButton", {
 	Size = UDim2.new(0, 22, 0, 22),
-	BackgroundColor3 = C.accent,
-	BackgroundTransparency = 0.3,
+	BackgroundTransparency = 1,
 	BorderSizePixel = 0,
 	Text = "◢",
-	TextColor3 = Color3.new(1, 1, 1),
-	TextSize = 12,
+	TextColor3 = C.dim,
+	TextSize = 13,
 	Font = Enum.Font.GothamBold,
 	AutoButtonColor = false,
 	ZIndex = 10,
 }, gui)
-round(handle, 6)
+handle.MouseEnter:Connect(function() tween(handle, { TextColor3 = C.accent }) end)
+handle.MouseLeave:Connect(function() tween(handle, { TextColor3 = C.dim }) end)
 
 local function placeHandle()
 	handle.Position = UDim2.fromOffset(
@@ -428,7 +569,7 @@ end)
 ------------------------------------------------------------
 -- BACKGROUND LOOPS (stop when the panel is closed)
 ------------------------------------------------------------
-task.spawn(function()
+task.spawn(function() -- auto gather
 	while gui.Parent do
 		task.wait(cfg.interval)
 		if cfg.auto and gui.Parent then
@@ -438,10 +579,10 @@ task.spawn(function()
 	end
 end)
 
-task.spawn(function()
+task.spawn(function() -- item counter
 	while gui.Parent do
 		if content.Visible then
-			countLabel.Text = ("Found: %d item(s) named \"%s\""):format(#findParts(), cfg.name)
+			countLabel.Text = ('Found <b>%d</b> item(s) named "%s"'):format(#findParts(), cfg.name)
 		end
 		task.wait(3)
 	end
