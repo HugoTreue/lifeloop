@@ -1,5 +1,5 @@
 --========================================================
--- Test1Cafe (client-side) - Rayfield UI edition
+-- RiTW Unboxed (client-side) - Rayfield UI edition
 -- RightShift hides/shows the window. "Kill UI" shuts everything
 -- down; running the script again starts a clean new copy.
 --========================================================
@@ -10,8 +10,8 @@ local player = Players.LocalPlayer
 
 -- if an older copy is still running, shut it down first
 local env = (getgenv and getgenv()) or _G
-if env.Test1CafeKill then
-	pcall(env.Test1CafeKill)
+if env.RiTWUnboxedKill then
+	pcall(env.RiTWUnboxedKill)
 end
 
 ------------------------------------------------------------
@@ -187,7 +187,7 @@ local okLoad, Rayfield = pcall(function()
 	))()
 end)
 if not okLoad or not Rayfield then
-	warn("Test1Cafe: couldn't load Rayfield: " .. tostring(Rayfield))
+	warn("RiTW Unboxed: couldn't load Rayfield: " .. tostring(Rayfield))
 	alive = false
 	for _, c in ipairs(conns) do pcall(function() c:Disconnect() end) end
 	return
@@ -238,11 +238,11 @@ local theme = {
 }
 
 local Window = Rayfield:CreateWindow({
-	Name = "Test1Cafe",
+	Name = "RiTW Unboxed",
 	Icon = 0,
-	LoadingTitle = "Test1Cafe",
+	LoadingTitle = "RiTW Unboxed",
 	LoadingSubtitle = "client-side tools",
-	ShowText = "Test1Cafe",
+	ShowText = "RiTW Unboxed",
 	Theme = theme,
 	ToggleUIKeybind = Enum.KeyCode.RightShift,
 	DisableRayfieldPrompts = true,
@@ -333,7 +333,7 @@ setStatus = function(text, isErr)
 	if not alive then return end
 	statusLabel:Set(text, isErr and "triangle-alert" or "activity")
 	if isErr then
-		Rayfield:Notify({ Title = "Test1Cafe", Content = text, Duration = 4, Image = "triangle-alert" })
+		Rayfield:Notify({ Title = "RiTW Unboxed", Content = text, Duration = 4, Image = "triangle-alert" })
 	end
 end
 
@@ -366,9 +366,9 @@ kill = function()
 	hooked = {}
 
 	pcall(function() Rayfield:Destroy() end)
-	if env.Test1CafeKill == kill then env.Test1CafeKill = nil end
+	if env.RiTWUnboxedKill == kill then env.RiTWUnboxedKill = nil end
 end
-env.Test1CafeKill = kill
+env.RiTWUnboxedKill = kill
 
 ------------------------------------------------------------
 -- BACKGROUND LOOPS (stop when the panel is killed)
