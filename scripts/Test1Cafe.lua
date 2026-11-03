@@ -111,11 +111,13 @@ local function restoreAll()
 end
 
 -- drops the tools you're holding or carrying (up to cfg.maxTools, 0 = all)
-local function dropTools()
+-- dest (optional CFrame): drop them there instead of where you stand
+local function dropTools(dest)
 	-- if the game has a "DropAllTools" RemoteEvent (see the server Script),
-	-- ask the server to do it so everyone sees it
+	-- ask the server to do it so everyone sees it (only for a normal drop;
+	-- the server event has no way to receive a chosen spot)
 	local remote = game:GetService("ReplicatedStorage"):FindFirstChild("DropAllTools")
-	if remote and remote:IsA("RemoteEvent") then
+	if not dest and remote and remote:IsA("RemoteEvent") then
 		remote:FireServer(cfg.maxTools)
 		setStatus("Asked the server to drop your tools")
 		return
@@ -151,9 +153,15 @@ local function dropTools()
 		if t.Parent == char then
 			t.Parent = Workspace
 			n += 1
+			-- chosen spot: move the handle there, fanned out so tools don't stack
+			local handle = t:FindFirstChild("Handle")
+			if dest and handle and handle:IsA("BasePart") then
+				handle.CFrame = dest * CFrame.new((n - 1) * 1.5, 0, 0)
+				handle.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+			end
 		end
 	end
-	setStatus(("Dropped %d tool(s)"):format(n))
+	setStatus(dest and ("Dropped %d tool(s) at your spot"):format(n) or ("Dropped %d tool(s)"):format(n))
 end
 
 local function hook(d)
@@ -294,7 +302,52 @@ toolsInput = Tab:CreateInput({
 		if toolsInput then toolsInput:Set(tostring(cfg.maxTools)) end
 	end,
 })
-Tab:CreateButton({ Name = "Drop tools", Callback = dropTools })
+Tab:CreateButton({ Name = "Drop tools", Callback = function() dropTools() end })
+
+-- drop at a chosen spot ------------------------------------------
+Tab:CreateSection("Drop at a spot")
+local dropPoint, picking
+local spotLabel = Tab:CreateLabel("Spot: not set", "map-pin")
+
+local function setSpot(cf)
+	dropPoint = cf
+	local p = cf.Position
+	spotLabel:Set(("Spot: %d, %d, %d"):format(p.X, p.Y, p.Z), "map-pin")
+	setStatus("Drop spot saved")
+end
+
+Tab:CreateButton({
+	Name = "Pick spot (then click in the world)",
+	Callback = function()
+		picking = true
+		setStatus("Click anywhere in the world to set the spot")
+	end,
+})
+Tab:CreateButton({
+	Name = "Use my position as the spot",
+	Callback = function()
+		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		if not root then setStatus("No character yet", true) return end
+		picking = false
+		setSpot(root.CFrame)
+	end,
+})
+Tab:CreateButton({
+	Name = "Drop tools at the spot",
+	Callback = function()
+		if not dropPoint then setStatus("Set a spot first", true) return end
+		dropTools(dropPoint)
+	end,
+})
+
+-- the click that finishes "Pick spot" (clicks on the panel itself are ignored)
+track(game:GetService("UserInputService").InputBegan:Connect(function(input, processed)
+	if picking and not processed and input.UserInputType == Enum.UserInputType.MouseButton1 then
+		picking = false
+		local hit = player:GetMouse().Hit
+		if hit then setSpot(CFrame.new(hit.Position + Vector3.new(0, 3, 0))) end
+	end
+end))
 
 -- settings ------------------------------------------------------
 Tab:CreateSection("Settings")
