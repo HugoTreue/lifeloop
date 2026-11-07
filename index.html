@@ -7075,6 +7075,19 @@ try{if(!S.prog12){var PG={"plan":{"mon":{"name":"A: Chest and shoulders","ex":[{
  S.npg=(S.npg||[]).filter(function(p){return p.id!==PG.note.id});var _nn=_cp(PG.note);_nn.ed=_pn;_nn.ord=_pn;_nn.ts=_pn;S.npg.push(_nn);
  nuSetW(function(s){for(var k in PG.nset)s[k]=PG.nset[k]});
  S.prog12=1;save()}}catch(e){}
+try{if(S.prog12&&!S.prog12b){
+ var _c6=(S.plan.wed.ex||[]).filter(function(e){return e.id==='p12_c6'})[0],_e7=(S.plan.sat.ex||[]).filter(function(e){return e.id==='p12_e7'})[0];
+ if(_c6){_c6.t='Ab crunch machine';_c6.swap='Cable crunch (kneeling)'}
+ if(_e7)_e7.swap='Ab crunch machine';
+ if(!S.lib.some(function(l){return l.name==='Ab crunch machine'}))S.lib.push({id:lbid('Ab crunch machine'),name:'Ab crunch machine',muscle:'Core',kind:'ex',sets:3,reps:10,rest:90});
+ var _np=S.npg.filter(function(p){return p.id==='np_12wk01'})[0];
+ if(_np){var _b=_np.blocks,_o=[];_b.forEach(function(x){
+  if(/^Cable crunch \(kneeling\): 3 x/.test(x.x))x.x='Ab crunch machine: 3 x 10–15. Swap: Cable crunch (kneeling).';
+  if(/^Hanging leg raise: 3 x 8–15/.test(x.x))x.x='Hanging leg raise: 3 x 8–15. Swap: Ab crunch machine.';
+  _o.push(x);
+  if(/^Home backup:/.test(x.x))_o.push({t:'ul',x:'Ab crunch machine: pick a weight that makes 10 to 15 reps hard and stop with about 2 reps left. Curl your ribs down towards your hips, do not pull with your arms. Breathe out as you crunch, lower over about 2 seconds. Once all 3 sets reach 15 reps, move up one pin.',i:0})});
+  _o.forEach(function(x,i){x.i=i});_np.blocks=_o;_np.ts=Date.now();_np.ed=Date.now()}
+ S.prog12b=1;save()}}catch(e){}
 try{if(S.prog12&&!lsGet('lifeloop.ns12')){var _ns=nsGet();_ns.start='2026-11-09';lsSet('lifeloop.ns',JSON.stringify(_ns));lsSet('lifeloop.ns12','1')}}catch(e){}
 updateHint();renderAll();initDb();
 })();
