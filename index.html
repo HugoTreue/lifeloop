@@ -19,7 +19,7 @@
 /* Layout: one centred column. Header card with level and stats, a capture bar that stays on every tab, segmented tabs, then the active view. */
 :root{
   color-scheme:dark;
-  --page:#121b25; --page-a:#0e1721; --page-b:#182737; --bg:#1d2b39; --bg2:#243546; --bd:#2f4356; --tabon:#34495f; --spot:rgba(255,255,255,.06); --sweep:rgba(14,23,33,.55); --glow:rgba(229,177,58,.12);
+  --page:#121b25; --page-a:#0e1721; --page-b:#182737; --bg:#1d2b39; --bg2:#243546; --bd:#2f4356; --tabon:#34495f; --spot:rgba(255,255,255,.06); --sweep:rgba(14,23,33,.55); --glow:rgba(229,177,58,.2);
   --fg:#e6ecf2; --ti:#ffffff; --mu:#a3b1bf;
   --gr:#3fd07a; --grs:#27ae60; --rd:#ff6b5f; --rds:#e23939; --bl:#4d8dff;
   --gold1:#ffe08a; --gold2:#e5b13a; --gold3:#b27d12; --goldtxt:#e9b84a;
@@ -320,6 +320,36 @@ html.tx *,html.tx *::before,html.tx *::after{transition:background-color .8s eas
 /* greeting on top + priority */
 .greet{padding:14px 16px}
 .greet .hello{gap:0}
+.nstar{position:relative;overflow:hidden;padding:18px 18px 16px;display:flex;flex-direction:column;gap:12px;background:radial-gradient(560px 240px at 100% 0%,var(--glow),transparent 70%),radial-gradient(420px 200px at 0% 100%,rgba(63,208,122,.10),transparent 70%),var(--bg)}
+.nstar .nsk{display:flex;align-items:center;gap:8px;justify-content:space-between}
+.nstar .nsid{font:800 clamp(28px,7vw,40px)/1.02 var(--fd);letter-spacing:-.025em;margin:0}
+.nstar .nswhy{font-size:16px;line-height:1.45;color:var(--fg);min-height:2.9em;transition:opacity .45s ease,transform .45s ease}
+.nstar .nswhy.fade{opacity:0;transform:translateY(4px)}
+.nstar .nsday{display:flex;align-items:center;gap:10px}
+.nstar .nsday .bar{height:8px}
+.nstar .nsday .lbl{white-space:nowrap}
+.nstar .nsgo{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:left;padding:14px 16px;border-radius:16px;background:linear-gradient(135deg,var(--gold1),var(--gold2) 60%,var(--gold3));color:#1a1206;box-shadow:0 6px 22px var(--glow);transition:transform .12s}
+.nstar .nsgo:active{transform:scale(.98)}
+.nstar .nsgo b{display:block;font:800 18px/1.2 var(--fd)}
+.nstar .nsgo small{display:block;font-size:12.5px;font-weight:600;opacity:.75}
+.nstar .nsgo .nsar{font:800 22px/1 var(--fd)}
+.nstar .lnk{font-size:12.5px;color:var(--mu)}
+.nstar .nsed{display:flex;flex-direction:column;gap:8px}
+.nstar .nsed textarea{min-height:130px}
+.nstar .nsbtns{display:flex;gap:8px;flex-wrap:wrap}
+@media (prefers-reduced-motion:reduce){.nstar .nswhy{transition:none}}
+.nstar .nsstat{font-size:13.5px;color:var(--mu);margin-top:-4px}
+.smma{padding:16px 16px 14px;display:flex;flex-direction:column;gap:12px}
+.smma .smh{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.smma h3{font:800 20px/1.2 var(--fd);margin:0;color:var(--ti)}
+.smma .smrow{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:11px 12px;border-radius:14px;background:var(--bg2);border:1px solid transparent;transition:background .12s,border-color .12s}
+.smma .smrow:hover{border-color:color-mix(in srgb,var(--gold2) 50%,transparent)}
+.smma .smrow i{flex:none;width:24px;height:24px;border-radius:50%;border:2px solid var(--gold2);display:grid;place-items:center;font-style:normal;font-size:13px;font-weight:800;color:#0b1a12}
+.smma .smrow.on i{background:var(--gold2)}
+.smma .smrow.on span{color:var(--mu);text-decoration:line-through}
+.smma .smrow.nx{border-color:var(--gold2)}
+.smma .smrow small{display:block;font-size:12px;color:var(--mu)}
+.gwd.miss .gst{color:var(--mu)}
 .gtools{align-self:flex-start;flex-direction:column;align-items:stretch;gap:6px}
 .gtools .k{white-space:nowrap}
 .ib.star{font-size:17px;line-height:1;color:var(--mu)}
@@ -1755,6 +1785,7 @@ html body .rseg[data-v]::before{width:calc((100% - 8px - (var(--n,3) - 1) * 4px)
 <div class="wrap">
 <div class="mtop" id="mtop"><button class="ib menubtn" data-act="menu" aria-label="Open menu" id="mtMenu"></button><span id="mtTitle">Lifeloop</span></div>
 <div id="appLife">
+  <section class="card nstar" id="nstar" aria-label="Your north star"></section>
   <section class="card greet" id="greet"></section>
   <header class="card hd">
     <div class="hr1">
@@ -2435,11 +2466,11 @@ function taskRow(t,o){
 }
 
 function mood(done,total,hr){
- if(!total)return 'Fresh page. What would feel good to get done?';
- if(done===0)return hr<12?'Plenty of day ahead. Start with the first one.':'Still time. Pick the easiest one and get moving.';
- if(done>=total)return 'All done. That is a proper day, go and enjoy the rest of it.';
- if(done/total>=.5)return 'Over halfway, '+(total-done)+' to go. You are on a roll.';
- return 'Nice start. '+(total-done)+' left for today.';
+ if(!total)return hr<12?'Blank slate. Pick one win and the day is yours.':'Still time to win today. Pick one move and do it.';
+ if(done===0)return hr<12?'First one is the hardest. Knock it out and the rest follow.':'Still time. Do the easiest one now and build from there.';
+ if(done>=total)return 'Day won. That is the person you are becoming.';
+ if(done/total>=.5)return 'Over halfway, '+(total-done)+' to go. Finish it.';
+ return 'Moving. '+(total-done)+' left. Keep the chain going.';
 }
 var showAll=lsGet('lifeloop.showall')==='1';
 var hDue=lsGet('lifeloop.hdue')==='1';
@@ -2472,7 +2503,7 @@ function nowQueue(){
 }
 function nowCard(){
  var q=nowQueue(),h='',dsx=dayStats();
- if(!q.length){var ibx=tasksBy('inbox').slice(0,3);return '<div class="now allclear"><span class="lbl">All clear</span><h3>Nothing left for today</h3><p class="mu">Everything due is done. Rest up, or pull one more in if you feel like getting ahead.</p></div>'+(ibx.length?'<div class="sec"><div class="sech"><span class="lbl">Want to get ahead?</span></div>'+ibx.map(function(t){return taskRow(t,{toToday:true,toLater:true})}).join('')+'</div>':'')}
+ if(!q.length){var ibx=tasksBy('inbox').slice(0,3),dsz=dayStats();return (dsz.total?'<div class="now allclear"><span class="lbl">Day won</span><h3>Everything done today</h3><p class="mu">That is the person you are becoming. Rest up, or pull one more in to get ahead.</p></div>':'<div class="now"><span class="lbl">Blank slate</span><h3>One move makes it a good day</h3><p class="mu">Add a win above and tap Do today, or start today\'s gym session.</p><div class="nsbtns"><button class="k sm go" data-act="nsfocus">Add a win</button><button class="k sm" data-act="app" data-app="gym">Open gym</button></div></div>')+(ibx.length?'<div class="sec"><div class="sech"><span class="lbl">Want to get ahead?</span></div>'+ibx.map(function(t){return taskRow(t,{toToday:true,toLater:true})}).join('')+'</div>':'')}
  var it=q[0],o=it.o,isT=it.type==='t',col=(areaOf(o.area)||{c:'#9fb3c8'}).c;
  var nm=isT?o.title:o.name;
  var tt=isT?0:hTimes(o),cc=isT?0:habitCount(o,today());
@@ -4922,7 +4953,7 @@ var DROPICON='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke
 var DROPBRAND='<svg class="tlogo" viewBox="0 0 40 40" aria-hidden="true"><defs><linearGradient id="dpl" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#047857"/><stop offset=".5" stop-color="#10b981"/><stop offset="1" stop-color="#a7f3d0"/></linearGradient></defs><rect x="2" y="2" width="36" height="36" rx="11" fill="url(#dpl)" opacity=".2"/><path d="M20 9l9 5v10.500L20 30l-9-5.500V14z" fill="none" stroke="url(#dpl)" stroke-width="2.800" stroke-linejoin="round"/><path d="M11 14l9 5 9-5M20 19v11" fill="none" stroke="url(#dpl)" stroke-width="2.800" stroke-linecap="round" stroke-linejoin="round"/></svg><span><i class="gx">SMMA</i></span>';
 function renderDrop(){
  var el=$('#appDrop');if(!el||app!=='drop')return;
- el.innerHTML=secHead(DROPBRAND,'drop')+'<section class="card dropph"><div class="dropico">'+DROPICON.replace('width="22" height="22"','width="44" height="44"')+'</div><h3>SMMA</h3><p class="mu">Coming soon. This section is a placeholder for now.</p></section>';
+ el.innerHTML=secHead(DROPBRAND,'drop')+smmaCard();
 }
 function arcHtml(){
  return '<section class="card arccard"><h3>Archived sections</h3><p class="mu">Sections you have moved out of the main menu. They keep all their data and still work.</p><button class="arcrow" data-act="app" data-app="trade"><span class="arcic">'+I('chartln',24)+'</span><span class="nun"><b>TradeCycle</b><span class="mu">Your trading journal, calendar and charts</span></span><span class="arcgo">'+I('right',16)+'</span></button></section>';
@@ -5788,18 +5819,72 @@ function secGreet(sub){
 }
 function secSub(a){
  var t0=today(),n;
- if(a==='gym'){var q=plan()[dkey(t0)],l=gymLogOf(t0);return !q.ex.length?'Rest day today. Recover well.':(l&&l.fin?'Workout done. Nice work.':'Today: '+q.name+', '+q.ex.length+' exercises.')}
+ if(a==='gym'){var q=plan()[dkey(t0)],l=gymLogOf(t0);return !q.ex.length?'Rest day today. Recovery is part of the plan.':(l&&l.fin?'Workout done. That is another brick laid.':'Today: '+q.name+', '+q.ex.length+' exercises.')}
  if(a==='cal'){n=evOn(t0).length;return n?n+(n===1?' event':' events')+' today.':'Nothing on the calendar today.'}
  if(a==='study'){n=S.sitems.filter(function(x){return !x.done}).length;return n?n+' open '+(n===1?'deadline':'deadlines')+'. One step at a time.':'No open deadlines. Add one when it appears.'}
- if(a==='tools')return 'Handy things in one place.';
- if(a==='drop')return 'Your organic store, in one place.';
+ if(a==='tools')return 'Everything you need to get the hard thing done.';
+ if(a==='drop')return 'Meta ads for roofers. Ten steps from zero to your first £1,000 month.';
  if(a==='notes'){var nn=S.npg.filter(function(x){return !x.tr&&!x.row}).length;return nn?nn+(nn===1?' page':' pages')+' in your notes.':'Your notes, lists and databases.'}
  if(a==='nutri'){var nt=nuDayTot(nuDay||today()),ns=nuSet();return Math.round(nt.k)+' of '+Math.round(ns.kcal)+' kcal'+(nuDay&&nuDay!==today()?' on '+nuDateLabel(nuDay).toLowerCase():' today')+'.'}
  if(a==='trade'){var t=tradeOn(t0);return t?'Today so far: '+money(t.pnl,{sign:true})+'.':'Log your day when you are done trading.'}
  return '';
 }
+var SEC={
+ gym:{id:'Built, not born.',why:['Wider shoulders, bigger arms. One set at a time.','Growth lives in the last reps of a set. Get close to failure.','The car park is not the gym. Walk in.','Every session is a vote for the man you are becoming.','Twelve weeks from now you will thank this session.']},
+ nutri:{id:'Fuel the build.',why:['No surplus, no size. Eat the extra meal.','Protein at every meal, palm-sized or bigger.','Lunch is the meal that changes everything.','Your big appetite is an advantage. Use it.']},
+ study:{id:'Engineer in the making.',why:['Short sessions every day beat one panic night.','Future you designs systems that run on their own.','One topic at a time. One deadline at a time.','Your mind is your best tool. Sharpen it.']},
+ cal:{id:'Own your time.',why:['A plan on the calendar beats a plan in your head.','Protect your gym slot like a lecture.','Bed by 22:30 is an appointment too.']},
+ notes:{id:'Capture everything.',why:['An idea is worth nothing until it is written down.','Your medal research deserves a proper home.','Write it once, use it forever.']},
+ tools:{id:'Work smarter.',why:['Set 25 minutes and start. Momentum does the rest.','The right tool makes the hard thing smaller.']},
+ drop:{id:'Build the engine.',why:['The business funds the freedom.','The call is scary. Do it scared.','One client changes everything.','So you can help your parents without worrying.']},
+ trade:{id:'Discipline over impulse.',why:['Protect the downside first.','Log every day. Patterns pay.']}
+};
+var secIdx=0,secEdit='';
+function secGet(a){var o=null;try{o=JSON.parse(lsGet('lifeloop.nss')||'null')}catch(e){o=null}o=o&&typeof o==='object'?o:{};var d=SEC[a]||{id:'',why:['']},x=o[a]||{};
+ return {id:x.id||d.id,why:Array.isArray(x.why)&&x.why.length?x.why:d.why.slice()}}
+function secSave(a,v){var o=null;try{o=JSON.parse(lsGet('lifeloop.nss')||'null')}catch(e){o=null}o=o&&typeof o==='object'?o:{};o[a]=v;lsSet('lifeloop.nss',JSON.stringify(o))}
+var SMMA=[['Start the 30-day software trial','Free for a month, then about £70'],['Build your first roofing ad','Your strength. Make it convert'],['Write a one-page call script','Intro, questions, offer, next step'],['Do 3 practice calls out loud','With a friend, before the real thing'],['Set up SMS outreach','About £30'],['Book your first meeting','From SMS replies'],['Do your first sales call','Scared is fine. Do it anyway'],['Sign client 1','£35 start plus £40 per lead'],['Sign client 2','Two clients covers your costs'],['Your first £1,000 month','Then buy your parents something meaningful']];
+function smmaDone(){var a=null;try{a=JSON.parse(lsGet('lifeloop.smma')||'[]')}catch(e){a=[]}return Array.isArray(a)?a:[]}
+function secNext(a){
+ var t0=today();
+ try{
+ if(a==='gym'){var q=plan()[dkey(t0)],l=gymLogOf(t0);if(!q.ex.length)return {t:'Rest day: walk, eat, sleep',s:'Recovery is when muscle is built'};if(l&&l.fin)return {t:'Workout done',s:'Protein now, bed by 22:30'};var ids=q.ex.map(function(e){return e.id}),dn=l?l.done.filter(function(x){return ids.indexOf(x)>-1}).length:0;return {t:(dn?'Finish: ':'Start: ')+q.name,s:dn?dn+' of '+q.ex.length+' done. Close it out':q.ex.length+' exercises. Walk in, that is the win'}}
+ if(a==='nutri'){var nt=nuDayTot(t0),ns=nuSet(),kl=Math.max(0,Math.round(ns.kcal-nt.k)),pl=Math.max(0,Math.round(ns.p-nt.p));return kl?{t:kl+' kcal to go today',s:pl+' g protein left. Log your next meal'}:{t:'Target hit',s:'That is how the scale moves'}}
+ if(a==='study'){var nx=S.sitems.filter(function(x){return !x.done&&x.due}).sort(sOrder)[0];return nx?{t:'Next: '+nx.t,s:'Due '+xCount(nx.due)+'. Do 25 minutes on it now'}:{t:'Plan a 25-minute session',s:'Small and daily wins'}}
+ if(a==='cal'){var ev=evOn(t0);return ev.length?{t:'Next: '+(ev[0].title||ev[0].t||'event')+(ev[0].time?' at '+ev[0].time:''),s:ev.length+(ev.length===1?' thing':' things')+' on today'}:{t:'Block tomorrow\'s gym slot',s:'8 to 9am or after 7pm is quietest'}}
+ if(a==='notes')return {t:'Write one note',s:'An idea, a plan, or one medal\'s story'};
+ if(a==='tools')return {t:'Start a 25-minute focus timer',s:'Pick one thing and go',act:'data-act="timer"'};
+ if(a==='drop'){var dd=smmaDone(),i;for(i=0;i<SMMA.length;i++)if(dd.indexOf(i)<0)return {t:SMMA[i][0],s:'Step '+(i+1)+' of '+SMMA.length+'. '+SMMA[i][1]};return {t:'All launch steps done',s:'Now scale it'}}
+ }catch(e){}
+ return {t:'Get started',s:secSub(a)||'One move at a time'}}
+function secStar(a){
+ if(!SEC[a])return secGreet(secSub(a));
+ var o=secGet(a),dl=new Date().toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'});
+ if(secEdit===a)return '<section class="card nstar"><div class="nsk"><span class="lbl">Edit this section\'s motto</span></div><div class="nsed"><label class="lbl" for="secIdIn">Motto</label><input id="secIdIn" maxlength="60" value="'+esc(o.id)+'"><label class="lbl" for="secWhyIn">Reasons, one per line</label><textarea id="secWhyIn">'+esc(o.why.join('\n'))+'</textarea><div class="nsbtns"><button class="k sm go" data-act="secsave" data-app="'+a+'">Save</button><button class="k sm" data-act="seccancel">Cancel</button></div></div></section>';
+ var nx=secNext(a),sub=secSub(a),day='';
+ if(a==='gym'||a==='nutri'){try{var no=nsGet(),d=nsDay(no),w=Math.ceil(d/7);day='<div class="nsday"><span class="lbl">'+(d<=84?'Day '+d+' of 84 · Week '+w+' · '+nsPhase(w):'Day '+d+' · next block')+'</span><div class="bar gold"><i style="width:'+Math.min(100,Math.round(d/84*100))+'%"></i></div></div>'}catch(e){}}
+ var w0=o.why[secIdx%o.why.length];
+ return '<section class="card nstar"><div class="nsk"><span class="lbl">'+esc(dl)+'</span><button class="lnk" data-act="secedit" data-app="'+a+'">Edit</button></div>'+
+  '<h2 class="nsid"><i class="gx">'+esc(o.id)+'</i></h2>'+
+  '<p class="nswhy secwhy" data-app="'+a+'">'+esc(w0)+'</p>'+(sub?'<p class="nsstat">'+esc(sub)+'</p>':'')+day+
+  '<button class="nsgo" '+(nx.act||'data-act="secgo" data-app="'+a+'"')+'><span><small>Your next move</small><b>'+esc(nx.t)+'</b><small>'+esc(nx.s)+'</small></span><span class="nsar" aria-hidden="true">&rarr;</span></button></section>';
+}
+setInterval(function(){if(secEdit)return;var p=document.querySelector('.secwhy');if(!p||!p.offsetParent)return;var a=p.dataset.app,o=secGet(a);if(o.why.length<2)return;p.classList.add('fade');setTimeout(function(){secIdx=(secIdx+1)%o.why.length;var q=document.querySelector('.secwhy');if(q&&q.dataset.app===a){q.textContent=o.why[secIdx];q.classList.remove('fade')}},450)},7000);
+function lsSecAct(act,el){
+ if(act==='secedit'){secEdit=el.dataset.app;renderAll();var i=$('#secIdIn');if(i){i.focus();[].forEach.call(document.querySelectorAll('#secIdIn,#secWhyIn'),function(x){x.addEventListener('keydown',function(e){e.stopPropagation()})})}return}
+ if(act==='seccancel'){secEdit='';renderAll();return}
+ if(act==='secsave'){var a=el.dataset.app,id=($('#secIdIn').value||'').trim(),why=($('#secWhyIn').value||'').split('\n').map(function(x){return x.trim()}).filter(Boolean);var o=secGet(a);if(id)o.id=id;if(why.length)o.why=why;secSave(a,o);secEdit='';secIdx=0;renderAll();toast('Saved');return}
+ if(act==='secgo'){var m={trade:'#appTrade',drop:'#appDrop',gym:'#appGym',cal:'#appCal',study:'#appStudy',tools:'#appTools',nutri:'#appNutri',notes:'#appNotes'}[el.dataset.app],c=m&&document.querySelector(m+' .thd');var t=c&&c.nextElementSibling;if(t)t.scrollIntoView({block:'start',behavior:'smooth'});return}
+ if(act==='smmatog'){var i2=+el.dataset.i,dd=smmaDone(),k=dd.indexOf(i2);if(k<0){dd.push(i2);toast(i2===SMMA.length-1?'First £1,000 month. Legend.':'Step done. Keep going')}else dd.splice(k,1);lsSet('lifeloop.smma',JSON.stringify(dd));renderAll();return}
+}
+function smmaCard(){
+ var dd=smmaDone(),n=dd.length,first=-1,i;for(i=0;i<SMMA.length;i++)if(dd.indexOf(i)<0){first=i;break}
+ return '<section class="card smma"><div class="smh"><h3>Launch plan</h3><span class="lbl">'+n+' of '+SMMA.length+'</span></div><div class="bar gold"><i style="width:'+Math.round(n/SMMA.length*100)+'%"></i></div>'+
+  SMMA.map(function(s,j){var on=dd.indexOf(j)>-1;return '<button class="smrow'+(on?' on':'')+(j===first?' nx':'')+'" data-act="smmatog" data-i="'+j+'" aria-pressed="'+on+'"><i>'+(on?'&#10003;':'')+'</i><span>'+esc(s[0])+'<small>'+esc(s[1])+'</small></span></button>'}).join('')+
+  '<p class="mu" style="font-size:12.5px">Tap a step when it is done. Your progress stays on this device.</p></section>';
+}
 function secHead(brand,a){
- return secGreet(secSub(a))+'<header class="card thd"><button class="ib menubtn" data-act="menu" aria-label="Menu">'+I('menu',18)+'</button><div class="tbrand">'+brand+'</div><div class="sp"></div><button class="ib syncbtn sy-off" data-act="syncbtn" hidden aria-label="Sync"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 18a4 4 0 0 1-.5-7.970A5.500 5.500 0 0 1 17 8.500 4.500 4.500 0 0 1 17.500 18z"/></svg><i></i></button><button class="ib" data-act="theme" aria-label="Switch light or dark theme">'+(isDark()?I('sun',17):I('moon',17))+'</button><button class="ib" data-act="settings" aria-label="Settings">'+I('sliders',17)+'</button></header>';
+ return secStar(a)+'<header class="card thd"><button class="ib menubtn" data-act="menu" aria-label="Menu">'+I('menu',18)+'</button><div class="tbrand">'+brand+'</div><div class="sp"></div><button class="ib syncbtn sy-off" data-act="syncbtn" hidden aria-label="Sync"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 18a4 4 0 0 1-.5-7.970A5.500 5.500 0 0 1 17 8.500 4.500 4.500 0 0 1 17.500 18z"/></svg><i></i></button><button class="ib" data-act="theme" aria-label="Switch light or dark theme">'+(isDark()?I('sun',17):I('moon',17))+'</button><button class="ib" data-act="settings" aria-label="Settings">'+I('sliders',17)+'</button></header>';
 }
 var GBASE={'Bench press':60,'Incline dumbbell press':22,'Overhead press':40,'Lateral raise':8,'Tricep pushdown':25,'Barbell row':55,'Lat pulldown':50,'Bicep curl':14,'Hammer curl':12,'Squat':80,'Romanian deadlift':70,'Leg press':140,'Walking lunge':20,'Calf raise':60,'Seated cable row':45,'Leg curl':35,'Face pull':20};
 function seedGym(){
@@ -6057,7 +6142,7 @@ function renderGym(){
  var h=secHead(GYMBRAND,'gym');
  h+='<section class="card gweek">'+days.map(function(d,ix){
   var q=P[GD[ix]],r=!q.ex.length,l=gymLogOf(d),f=!!(l&&l.fin),miss=!r&&!f&&d<t0;
-  return '<button class="gwd'+(d===sel?' on':'')+(d===t0?' today':'')+(f?' fin':'')+(r?' rest':'')+(miss?' miss':'')+'" data-act="gsel" data-day="'+d+'"><span class="gl">'+WDN[ix].charAt(0)+WDN[ix].slice(1).toLowerCase()+'</span><b>'+esc(gshort(q.name))+'</b><i class="gst">'+(f?I('check',14):r?'':miss?'missed':(d===t0?'today':''))+'</i></button>';
+  return '<button class="gwd'+(d===sel?' on':'')+(d===t0?' today':'')+(f?' fin':'')+(r?' rest':'')+(miss?' miss':'')+'" data-act="gsel" data-day="'+d+'"><span class="gl">'+WDN[ix].charAt(0)+WDN[ix].slice(1).toLowerCase()+'</span><b>'+esc(gshort(q.name))+'</b><i class="gst">'+(f?I('check',14):r?'':miss?'':(d===t0?'today':''))+'</i></button>';
  }).join('')+'</section>';
  h+='<section class="card gmain"><div class="ghead"><div><span class="lbl">'+(sel===t0?'Today':GN[GD.indexOf(k)])+' · '+esc(tfmt(sel,{day:'numeric',month:'short'}))+'</span><h2>'+esc(pd.name)+'</h2></div><button class="k sm" data-act="gedit" data-k="'+k+'">Edit day</button></div>';
  if(rest)h+='<div class="empty">Rest day. Recovery is part of the plan. Tap Edit day if you want to train.</div>';
@@ -6357,9 +6442,9 @@ function renderHeader(){
  $('#lvlTxt').textContent=(x-a)+' / '+(b-a);
  var st=dayStats();
  $('#strip').innerHTML=
-  '<div><span class="lbl">Points</span><b><i class="gx" id="ptsNum">'+(disp===null?balance():disp)+'</i></b><small>to spend</small></div>'+
-  '<div><span class="lbl">Today</span><b>'+st.done+'/'+st.total+'</b><small>done today</small></div>'+
-  '<div><span class="lbl">Streak</span><b>'+bestStreak()+'</b><small>days in a row</small></div>';
+  '<div><span class="lbl">Points</span><b><i class="gx" id="ptsNum">'+(disp===null?balance():disp)+'</i></b><small>'+(balance()?'to spend':'first win earns some')+'</small></div>'+
+  '<div><span class="lbl">Today</span><b>'+(st.total?st.done+'/'+st.total:'Open')+'</b><small>'+(!st.total?'add a first win':st.done>=st.total?'day won':'done today')+'</small></div>'+
+  (function(){var sk=bestStreak();return '<div><span class="lbl">Streak</span><b>'+(sk?sk+(sk===1?' day':' days'):'Day 1')+'</b><small>'+(sk?'keep it alive':'starts today')+'</small></div>'})();
  tweenPts(balance());
  var dark=isDark();
  $('#btnTheme').innerHTML=dark?I('sun',17):I('moon',17);
@@ -6403,6 +6488,44 @@ function renderView(){
  window.scrollTo(0,y);
  justId=null;
 }
+/* ----- north star ----- */
+var NS_DEF={id:'Strong and kind.',why:["For your brother's future.","So Mum and Dad never have to worry about money.","A body that walks into any room calm and confident.","Freedom: the valley house, your own time, your own work.","Fear is a forecast, not a fact. Go and check.","Start before you feel ready."]};
+var nsEditing=false,nsIdx=0,nsTimer=null;
+function nsGet(){var o=null;try{o=JSON.parse(lsGet('lifeloop.ns')||'null')}catch(e){o=null}o=o&&typeof o==='object'?o:{};var ch=false;
+ if(!o.id){o.id=NS_DEF.id;ch=true}if(!Array.isArray(o.why)||!o.why.length){o.why=NS_DEF.why.slice();ch=true}if(!o.start){o.start=today();ch=true}
+ if(ch)lsSet('lifeloop.ns',JSON.stringify(o));return o}
+function nsDay(o){var a=Date.parse(o.start+'T00:00:00'),b=Date.parse(today()+'T00:00:00');var d=Math.floor((b-a)/864e5)+1;return isFinite(d)&&d>0?d:1}
+function nsPhase(w){return w<=4?'Foundation':w<=8?'Build':w<=11?'Push':w===12?'Deload and measure':'Next block'}
+function nsNext(){
+ try{var t0=today(),pd=plan()[dkey(t0)],lg=gymLogOf(t0);
+  if(pd&&pd.ex.length&&!(lg&&lg.fin)){var ids=pd.ex.map(function(e){return e.id}),dn=lg?lg.done.filter(function(x){return ids.indexOf(x)>-1}).length:0;
+   return {t:'Gym: '+pd.name,s:dn?dn+' of '+pd.ex.length+' done. Finish it':pd.ex.length+' exercises. Walk in, that is the win',a:'data-act="app" data-app="gym"'}}}catch(e){}
+ try{var q=nowQueue();if(q.length){var o=q[0].o;return {t:(q[0].type==='t'?o.title:o.name),s:'Next on today\'s list',a:'data-act="nsview"'}}}catch(e){}
+ return {t:'Add one win for today',s:'Type it below and tap Do today',a:'data-act="nsfocus"'}}
+function renderNS(){
+ var el=$('#nstar');if(!el)return;var o=nsGet();
+ if(nsEditing){
+  el.innerHTML='<div class="nsk"><span class="lbl">Edit your north star</span></div><div class="nsed"><label class="lbl" for="nsIdIn">Who you are becoming</label><input id="nsIdIn" maxlength="60" value="'+esc(o.id)+'"><label class="lbl" for="nsWhyIn">Your reasons, one per line</label><textarea id="nsWhyIn">'+esc(o.why.join('\n'))+'</textarea><div class="nsbtns"><button class="k sm go" data-act="nssave">Save</button><button class="k sm" data-act="nscancel">Cancel</button><button class="k sm" data-act="nsrestart">Restart day count</button></div></div>';
+  [].forEach.call(el.querySelectorAll('input,textarea'),function(x){x.addEventListener('keydown',function(e){e.stopPropagation()})});return}
+ var d=nsDay(o),w=Math.ceil(d/7),nx=nsNext(),pct=Math.min(100,Math.round(d/84*100));
+ if(nsIdx>=o.why.length)nsIdx=0;
+ el.innerHTML='<div class="nsk"><span class="lbl">Who you are becoming</span><button class="lnk" data-act="nsedit">Edit</button></div>'+
+  '<h2 class="nsid"><i class="gx">'+esc(o.id)+'</i></h2>'+
+  '<p class="nswhy" id="nsWhy">'+esc(o.why[nsIdx])+'</p>'+
+  '<div class="nsday"><span class="lbl">'+(d<=84?'Day '+d+' of 84 · Week '+w+' · '+nsPhase(w):'Day '+d+' · 12 weeks done. Start the next block')+'</span><div class="bar gold"><i style="width:'+pct+'%"></i></div></div>'+
+  '<button class="nsgo" '+nx.a+'><span><small>Your next move</small><b>'+esc(nx.t)+'</b><small>'+esc(nx.s)+'</small></span><span class="nsar" aria-hidden="true">&rarr;</span></button>';
+ if(!nsTimer)nsTimer=setInterval(function(){if(nsEditing)return;var p=$('#nsWhy');if(!p)return;var oo=nsGet();if(oo.why.length<2)return;p.classList.add('fade');setTimeout(function(){nsIdx=(nsIdx+1)%oo.why.length;var q=$('#nsWhy');if(q){q.textContent=oo.why[nsIdx];q.classList.remove('fade')}},450)},7000);
+}
+function nsAct(a){
+ if(a==='nsedit'){nsEditing=true;renderNS();var i=$('#nsIdIn');if(i)i.focus();return}
+ if(a==='nscancel'){nsEditing=false;renderNS();return}
+ if(a==='nssave'){var o=nsGet(),id=($('#nsIdIn').value||'').trim(),why=($('#nsWhyIn').value||'').split('\n').map(function(x){return x.trim()}).filter(Boolean);
+  if(id)o.id=id;if(why.length)o.why=why;lsSet('lifeloop.ns',JSON.stringify(o));nsEditing=false;nsIdx=0;renderNS();toast('North star saved');return}
+ if(a==='nsrestart'){var el=$('[data-act="nsrestart"]');if(el&&!el.dataset.armed){el.dataset.armed='1';el.textContent='Tap again to restart at day 1';return}
+  var o2=nsGet();o2.start=today();lsSet('lifeloop.ns',JSON.stringify(o2));nsEditing=false;renderNS();toast('Day 1. Let\'s go');return}
+ if(a==='nsfocus'){var q=$('#qa');if(q){q.scrollIntoView({block:'center',behavior:'smooth'});setTimeout(function(){q.focus()},250)}return}
+ if(a==='nsview'){var v=$('#view');if(v)v.scrollIntoView({block:'start',behavior:'smooth'});return}
+}
 function renderGreet(){
  var el=$('#greet');if(!el)return;
  var st=dayStats(),done=st.done,total=st.total,pct=st.pct;
@@ -6413,6 +6536,7 @@ function renderGreet(){
  el.innerHTML='<div class="hello"><div class="hell"><div class="ring"><svg width="60" height="60" viewBox="0 0 60 60" aria-hidden="true"><circle class="trk" cx="30" cy="30" r="24" fill="none" stroke-width="6"/><circle class="val" cx="30" cy="30" r="24" fill="none" stroke-width="6" stroke-linecap="round" stroke-dasharray="'+(CC*pct/100).toFixed(1)+' '+CC.toFixed(1)+'"/></svg><b>'+pct+'%</b></div>'+
   '<div class="htxt"><span class="lbl">'+esc(dayLbl)+'</span><h2>'+greet+'</h2><span class="mu">'+esc(mood(done,total,hr))+(pts?' +'+pts+' points so far.':'')+'</span>'+(S.name?'':'<button class="lnk" data-act="opensettings">Add your name</button>')+'</div><div class="sp"></div><div class="tools gtools"><button class="k sm'+(run?' on':'')+'" id="tmrBtn" data-act="timer">'+(run?tmrLabel()+' · Stop':'Focus 25:00')+'</button><button class="k sm'+(S.quiet?' on':'')+'" data-act="quiet" aria-pressed="'+(!!S.quiet)+'">Quiet mode</button></div></div></div>';
  todayOv();
+ try{renderNS()}catch(e){}
 }
 var CARDTH=[['none','Default'],['glass','Frosted glass'],['carbon','Carbon cards'],['metal','Brushed metal'],['neon','Neon edge'],['tint','Colour tint']];
 var THEMES=[['none','Plain'],['c1','Classic weave'],['c2','Fine weave'],['c3','Chunky weave'],['c4','Gloss sheen'],['c5','Midnight blue'],['c6','Silver']];
@@ -6590,6 +6714,8 @@ function onClick(e){
    if(tmrEnd>Date.now()){tmrEnd=0;lsSet('lifeloop.timer','');toast('Focus session stopped')}
    else{tmrEnd=Date.now()+25*60000;lsSet('lifeloop.timer',String(tmrEnd));toast('25 minutes. Pick one thing and go.')}
    renderGreet();renderView();break;
+  case 'secedit':case 'seccancel':case 'secsave':case 'secgo':case 'smmatog':lsSecAct(act,el);break;
+  case 'nsedit':case 'nscancel':case 'nssave':case 'nsrestart':case 'nsfocus':case 'nsview':nsAct(act);break;
   case 'pin':pinTask(id);break;
   case 'edit':openEdit(el.dataset.kind,id);break;
   case 'app':setApp(el.dataset.app);break;
