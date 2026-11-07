@@ -5805,11 +5805,24 @@ function plan(){
  return S.plan;
 }
 function exSpec(e){return e.kind==='st'?e.sets+' × '+e.reps+'s hold':e.sets+' × '+(e.rr||e.reps)+(e.rest?' · rest '+e.rest+'s':'')}
-function dkey(day){var p=day.split('-');return GD[(new Date(+p[0],+p[1]-1,+p[2]).getDay()+6)%7]}
+function wkey0(day){var p=day.split('-');return GD[(new Date(+p[0],+p[1]-1,+p[2]).getDay()+6)%7]}
+function gSkipped(day){return (S.gskip||[]).indexOf(day)>-1}
+function dkey(day){
+ var P=plan(),t0=today(),l=gymLogOf(day),w0=wkey0(day);
+ if(l&&l.wk&&P[l.wk])return l.wk;
+ if(day<t0)return w0;
+ var W=GD.filter(function(k){return P[k].ex.length});
+ if(!W.length||!P[w0].ex.length)return w0;
+ if(gSkipped(day)){var rk=GD.filter(function(k){return !P[k].ex.length})[0];return rk||w0}
+ var ptr=0,fl=S.gymlog.filter(function(x){return x.fin}).sort(function(a,c){return a.day<c.day?1:-1});
+ for(var i=0;i<fl.length;i++){var k=fl[i].wk&&P[fl[i].wk]?fl[i].wk:GD.filter(function(q){return P[q].name===fl[i].name})[0],ix=k?W.indexOf(k):-1;if(ix>-1){ptr=(ix+1)%W.length;break}}
+ var n=0,d=t0;while(d<day){var lg=gymLogOf(d);if(P[wkey0(d)].ex.length&&!gSkipped(d)&&!(lg&&lg.fin))n++;d=addDays(d,1)}
+ return W[(ptr+n)%W.length];
+}
 function gymLogOf(day){return S.gymlog.filter(function(l){return l.day===day})[0]||null}
 function setGymLog(day,fn){
  var l=gymLogOf(day);
- if(!l){l={id:'gl_'+day,day:day,name:plan()[dkey(day)].name,done:[],fin:false};S.gymlog.push(l)}
+ if(!l){l={id:'gl_'+day,day:day,wk:dkey(day),name:plan()[dkey(day)].name,done:[],fin:false};S.gymlog.push(l)}
  fn(l);save();
 }
 function secGreet(sub){
@@ -6141,11 +6154,12 @@ function renderGym(){
  var done=lg?lg.done.filter(function(x){return ids.indexOf(x)>-1}):[],fin=!!(lg&&lg.fin);
  var h=secHead(GYMBRAND,'gym');
  h+='<section class="card gweek">'+days.map(function(d,ix){
-  var q=P[GD[ix]],r=!q.ex.length,l=gymLogOf(d),f=!!(l&&l.fin),miss=!r&&!f&&d<t0;
+  var q=P[dkey(d)],r=!q.ex.length,l=gymLogOf(d),f=!!(l&&l.fin),miss=!r&&!f&&d<t0;
   return '<button class="gwd'+(d===sel?' on':'')+(d===t0?' today':'')+(f?' fin':'')+(r?' rest':'')+(miss?' miss':'')+'" data-act="gsel" data-day="'+d+'"><span class="gl">'+WDN[ix].charAt(0)+WDN[ix].slice(1).toLowerCase()+'</span><b>'+esc(gshort(q.name))+'</b><i class="gst">'+(f?I('check',14):r?'':miss?'':(d===t0?'today':''))+'</i></button>';
  }).join('')+'</section>';
- h+='<section class="card gmain"><div class="ghead"><div><span class="lbl">'+(sel===t0?'Today':GN[GD.indexOf(k)])+' · '+esc(tfmt(sel,{day:'numeric',month:'short'}))+'</span><h2>'+esc(pd.name)+'</h2></div><button class="k sm" data-act="gedit" data-k="'+k+'">Edit day</button></div>';
- if(rest)h+='<div class="empty">Rest day. Recovery is part of the plan. Tap Edit day if you want to train.</div>';
+ h+='<section class="card gmain"><div class="ghead"><div><span class="lbl">'+(sel===t0?'Today':GN[GD.indexOf(wkey0(sel))])+' · '+esc(tfmt(sel,{day:'numeric',month:'short'}))+'</span><h2>'+esc(pd.name)+'</h2></div><button class="k sm" data-act="gedit" data-k="'+k+'">Edit day</button></div>';
+ if(rest&&gSkipped(sel))h+='<div class="empty">Skipped. This workout moves to the next free day.</div><div class="gact"><button class="k sm" data-act="gunskip" data-day="'+sel+'">Undo skip</button></div>';
+ else if(rest)h+='<div class="empty">Rest day. Recovery is part of the plan. Tap Edit day if you want to train.</div>';
  else{
   h+='<div class="gprog"><i style="width:'+Math.round(100*done.length/pd.ex.length)+'%"></i></div><div class="mu tl">'+done.length+' of '+pd.ex.length+' exercises done'+(canTick?'':' · opens on the day')+'</div>';
   h+=pd.ex.map(function(e){
@@ -6155,7 +6169,7 @@ function renderGym(){
   if(canTick){
    var isT=sel===t0,run=lg&&lg.start&&!lg.fin;
    if(fin)h+='<div class="gact"><span class="gok">Workout logged'+(lg.dur?' · '+gdur(lg.dur):'')+'</span><button class="k sm" data-act="greopen">Reopen</button></div>';
-   else if(isT&&!run)h+='<div class="gact"><button class="k go" data-act="gstart">Start workout</button><button class="k sm" data-act="gfin">Log without timer</button></div>';
+   else if(isT&&!run)h+='<div class="gact"><button class="k go" data-act="gstart">Start workout</button><button class="k sm" data-act="gfin">Log without timer</button><button class="k sm" data-act="gskip">Skip today</button></div>';
    else h+='<div class="gact">'+(run?'<span class="gtimer" id="gTimer">'+gclock(Math.floor((Date.now()-lg.start)/1000))+'</span>':'')+'<button class="k go" data-act="gfin">Finish workout</button></div>';
   }
  }
@@ -6787,6 +6801,8 @@ function onClick(e){
   case 'gsel':gymSel=el.dataset.day;renderGym();break;
   case 'gtick':gymTick(el.dataset.id);break;
   case 'gstart':gymStart();break;
+  case 'gskip':(S.gskip=S.gskip||[]).push(today());save();renderGym();toast('Skipped. Moved to the next free day');break;
+  case 'gunskip':S.gskip=(S.gskip||[]).filter(function(x){return x!==el.dataset.day});save();renderGym();break;
   case 'gfin':gymFin(true);break;
   case 'greopen':gymFin(false);break;
   case 'gedit':openGymDay(el.dataset.k);break;
