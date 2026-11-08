@@ -1795,6 +1795,17 @@ html body .rseg[data-v]::before{width:calc((100% - 8px - (var(--n,3) - 1) * 4px)
 .ppempty{color:#8b8573;font-size:17px}
 .ppfoot{display:flex;justify-content:flex-end}
 .paper .hsteps{display:inline-flex;gap:4px;margin-left:6px;vertical-align:middle}
+
+.tab[hidden]{display:none!important}
+.tabs.sz .tab{flex:1 1 0!important;font-size:var(--tf)!important;padding:var(--tp)!important}
+@media (max-width:700px){
+ html body #appLife{gap:0}
+ html body #appLife>.card{background:transparent!important;box-shadow:none!important;border-radius:0!important;border:0!important;border-bottom:1px solid rgba(150,160,185,.22)!important;margin:0!important;padding-left:2px!important;padding-right:2px!important;padding-top:10px!important;padding-bottom:10px!important}
+ html body #appLife>main.card{border-bottom:0!important;padding:6px 0 0!important}
+ html body #appLife>main.card>div:first-child{padding:4px 0 8px!important}
+ html body #appLife .paper{margin:0 0 20px}
+ html body #appLife .greet .strip>div{padding:8px 10px}
+}
 </style>
 
 
@@ -4996,7 +5007,7 @@ function arcHtml(){
 }
 var HSECS=[['cal','Calendar'],['gym','Gym'],['nutri','Nutrition'],['study','Study'],['notes','Notes'],['tools','Tools (includes the Archive)'],['drop','SMMA']];
 function hideViewsHtml(){
- var h=S.hideV||{};return '<details class="sub"><summary>Today views</summary><div class="mu" style="font-size:12.5px;margin-bottom:8px">Choose which views show in the List, Routine and Plan switch. At least one stays on.</div><div class="hmgrid">'+RVN.map(function(n,k){var off=!!h[k];return '<button class="k sm hm'+(off?'':' on')+'" data-dact="hidev" data-s="'+k+'"><span class="hmn">'+n+'</span><span class="hms">'+(off?'Hidden':'Shown')+'</span></button>'}).join('')+'</div></details>';
+ var h=S.hideT||{};return '<details class="sub"><summary>Home tabs</summary><div class="mu" style="font-size:12.5px;margin-bottom:8px">Choose which tabs show under the checklist. The ones left get bigger. Hidden tabs keep their data.</div><div class="hmgrid">'+TABS.filter(function(t){return t[0]!=='today'}).map(function(t){var off=!!h[t[0]];return '<button class="k sm hm'+(off?'':' on')+'" data-dact="hidet" data-s="'+t[0]+'"><span class="hmn">'+t[1]+'</span><span class="hms">'+(off?'Hidden':'Shown')+'</span></button>'}).join('')+'</div></details>';
 }
 function hideModeHtml(){
  return '<details class="sub"><summary>Hide mode</summary><div class="mu" style="font-size:12.5px;margin-bottom:8px">Choose which sections show in your menu. Hidden sections keep all their data and come back whenever you switch them on. Lifeloop always stays.</div><div class="hmgrid">'+HSECS.map(function(x){var off=!!(S.hide&&S.hide[x[0]]);return '<button class="k sm hm'+(off?'':' on')+'" data-dact="hide" data-s="'+x[0]+'"><span class="hmn">'+esc(x[1])+'</span><span class="hms">'+(off?'Hidden':'Shown')+'</span></button>'}).join('')+'</div></details>';
@@ -6549,17 +6560,21 @@ function renderTabs(){
  if(!nav.querySelector('.tab')){
   nav.innerHTML='<i class="tabind" id="tabInd"></i>'+TABS.map(function(t){return '<button class="tab" role="tab" data-tab="'+t[0]+'"><span>'+t[1]+'</span><em hidden></em></button>'}).join('');
  }
+ var HT=S.hideT||{},vc=0;
+ if(tab!=='today'&&HT[tab]){tab='today';lsSet('lifeloop.tab',tab)}
  TABS.forEach(function(t){
   var b=nav.querySelector('[data-tab="'+t[0]+'"]'),on=tab===t[0],em=b.querySelector('em'),c=counts[t[0]];
+  b.hidden=t[0]!=='today'&&!!HT[t[0]];if(!b.hidden)vc++;
   b.classList.toggle('on',on);b.setAttribute('aria-selected',on);
   em.textContent=c||'';em.hidden=!c;
  });
+ var anyH=vc<TABS.length;nav.classList.toggle('sz',anyH);nav.dataset.vc=vc;nav.style.setProperty('--tf',vc<=2?'16px':vc<=3?'15px':'13.5px');nav.style.setProperty('--tp',vc<=2?'13px 8px':vc<=3?'12px 8px':'10px 6px');nav.parentNode.hidden=vc<2;
  moveInd();
 }
 function moveInd(){
  var nav=$('#tabs'),b=nav.querySelector('.tab.on'),i=$('#tabInd');
  if(!b||!i)return;
- var mk=b.dataset.tab+':'+nav.clientWidth+':'+(b.parentNode.children.length);if(i.dataset.mk===mk&&i.dataset.init)return;i.dataset.mk=mk;
+ var mk=b.dataset.tab+':'+nav.clientWidth+':'+(b.parentNode.children.length)+':'+nav.dataset.vc+':'+nav.className;if(i.dataset.mk===mk&&i.dataset.init)return;i.dataset.mk=mk;
  var first=!i.dataset.init;
  if(first)i.style.transition='none';
  try{var lft=b.offsetLeft-(nav.clientWidth-b.offsetWidth)/2;nav.scrollLeft=Math.max(0,lft)}catch(x){}
@@ -6772,6 +6787,7 @@ function onClick(e){
    if(a==='otheme'){S.otheme=el.dataset.ot||'';save();applyBg();[].forEach.call(document.querySelectorAll('[data-dact=otheme]'),function(q){q.classList.toggle('on',q===el)});return}
    if(a==='cardth'){S.cardth=el.dataset.cs==='none'?'':el.dataset.cs;save();applyBg();[].forEach.call(document.querySelectorAll('[data-dact=cardth]'),function(q){q.classList.toggle('on',q===el)});return}
    if(a==='theme'){S.theme=el.dataset.th==='none'?'':el.dataset.th;save();applyBg();[].forEach.call(document.querySelectorAll('.thopt'),function(q){q.classList.toggle('on',q===el)});return}
+   if(a==='hidet'){var tk=el.dataset.s;S.hideT=S.hideT||{};if(S.hideT[tk])delete S.hideT[tk];else S.hideT[tk]=1;S.ts=Date.now();save();var toff=!!S.hideT[tk];el.classList.toggle('on',!toff);var ts_=el.querySelector('.hms');if(ts_)ts_.textContent=toff?'Hidden':'Shown';if(toff&&tab===tk)showTab('today');else renderTabs();return}
    if(a==='hidev'){var vk=el.dataset.s;S.hideV=S.hideV||{};if(S.hideV[vk])delete S.hideV[vk];else{if(rvVis().length<2){toast('Keep at least one view');return}S.hideV[vk]=1}S.ts=Date.now();save();var voff=!!S.hideV[vk];el.classList.toggle('on',!voff);var vs=el.querySelector('.hms');if(vs)vs.textContent=voff?'Hidden':'Shown';rvFix();renderView();todayOv();return}
    if(a==='hide'){var hk=el.dataset.s;S.hide=S.hide||{};if(S.hide[hk])delete S.hide[hk];else S.hide[hk]=1;save();var hoff=!!S.hide[hk];el.classList.toggle('on',!hoff);var hs=el.querySelector('.hms');if(hs)hs.textContent=hoff?'Hidden':'Shown';renderSide();if(hoff&&app===hk)setApp('life');return}
    if(a==='bigbg'){S.bigbg=!S.bigbg;save();applyBg();el.classList.toggle('on',!!S.bigbg);el.textContent='Big backgrounds: '+(S.bigbg?'On':'Off');return}
