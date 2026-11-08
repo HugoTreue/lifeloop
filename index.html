@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="build" content="20261108-230053">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#121b25">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -4998,6 +4999,16 @@ function arcHtml(){
  return '<section class="card arccard"><h3>Archived sections</h3><p class="mu">Sections you have moved out of the main menu. They keep all their data and still work.</p><button class="arcrow" data-act="app" data-app="trade"><span class="arcic">'+I('chartln',24)+'</span><span class="nun"><b>TradeCycle</b><span class="mu">Your trading journal, calendar and charts</span></span><span class="arcgo">'+I('right',16)+'</span></button></section>';
 }
 var HSECS=[['cal','Calendar'],['gym','Gym'],['nutri','Nutrition'],['study','Study'],['notes','Notes'],['tools','Tools (includes the Archive)'],['drop','SMMA']];
+var LLBUILD=(document.querySelector('meta[name=build]')||{}).content||'',llUpd=false,llChk=false;
+function llBusy(){var ov=document.getElementById('ov'),ae=document.activeElement;return (ov&&!ov.hidden)||(ae&&(ae.tagName==='INPUT'||ae.tagName==='TEXTAREA'||ae.isContentEditable))}
+function llDoUpdate(){if(llBusy()){llUpd=true;return}llUpd=false;try{if(sessionStorage.getItem('lifeloop.upd')===LLBUILD)return;sessionStorage.setItem('lifeloop.upd',LLBUILD)}catch(e){}forceUpdate()}
+function llCheckUpdate(){if(llChk||location.protocol.indexOf('http')!==0||!LLBUILD)return;llChk=true;fetch(location.pathname+'?build='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.text():''}).then(function(t){llChk=false;var m=/<meta name="build" content="([^"]+)"/.exec(t||'');if(m&&m[1]!==LLBUILD)llDoUpdate()}).catch(function(){llChk=false})}
+document.addEventListener('visibilitychange',function(){if(!document.hidden)llCheckUpdate()});
+window.addEventListener('focus',llCheckUpdate);
+document.addEventListener('focusout',function(){if(llUpd)setTimeout(function(){if(llUpd)llDoUpdate()},800)});
+document.addEventListener('click',function(){if(llUpd)setTimeout(function(){if(llUpd)llDoUpdate()},800)});
+setInterval(function(){if(!document.hidden)llCheckUpdate()},5*60*1000);
+setTimeout(llCheckUpdate,2500);
 function forceUpdate(){toast('Updating…');try{save()}catch(e){}var go=function(){location.replace(location.pathname+'?v='+Date.now())};
  Promise.resolve().then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistrations?navigator.serviceWorker.getRegistrations().then(function(r){return Promise.all(r.map(function(x){return x.unregister()}))}):0}).then(function(){return window.caches?caches.keys().then(function(k){return Promise.all(k.map(function(x){return caches.delete(x)}))}):0}).then(function(){return fetch(location.pathname,{cache:'reload'})}).then(go,go)}
 function hideViewsHtml(){
