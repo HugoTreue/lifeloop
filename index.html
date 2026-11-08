@@ -1760,6 +1760,39 @@ html body .rseg[data-v]::before{width:calc((100% - 8px - (var(--n,3) - 1) * 4px)
 .pwday.drop{outline-color:var(--gold2,#e8c26a)}
 .pwh{display:flex;justify-content:space-between;width:100%;background:none;border:0;color:inherit;font:inherit;cursor:pointer;padding:0}
 .pdh .lnk{margin-left:auto;font-size:12.5px;white-space:nowrap}.pdh b{white-space:nowrap}
+
+/* ----- paper checklist ----- */
+#tov{display:none!important}
+.paper{--ink:#26242e;--pen:#27479a;position:relative;margin:2px 0 26px;padding:12px 14px 20px 50px;background-color:#f6efdc;background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 33px,rgba(70,110,170,.2) 33px,rgba(70,110,170,.2) 34px);background-position:0 12px;border:1px solid var(--gold2);border-radius:6px;color:var(--ink);font-family:'Bradley Hand','Segoe Print','Chalkboard SE','Marker Felt','Comic Sans MS',cursive;font-size:19px;line-height:34px;box-shadow:0 12px 30px rgba(0,0,0,.35)}
+.paper:before{content:'';position:absolute;left:38px;top:0;bottom:0;width:1px;background:rgba(205,70,70,.5)}
+.paper button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;text-align:left;cursor:pointer;line-height:inherit}
+.pphd{display:flex;align-items:baseline;gap:10px;height:34px;margin-bottom:34px}
+.pphd b{font-size:25px;font-weight:700}.pphd span{margin-left:auto;color:#8a6a1e;font-size:17px}
+.ppsec{margin:0 0 34px}
+.ppsec>h3{display:flex;align-items:baseline;gap:8px;height:34px;margin:0;font-size:21px;font-weight:700;color:var(--ink);cursor:pointer}
+.paper .ppsec>h3,.paper .pphd b{color:var(--ink)!important;background:none!important;-webkit-text-fill-color:var(--ink)!important;text-shadow:none!important;letter-spacing:0!important;text-transform:none!important}
+.pphd b{font-size:22px!important;white-space:nowrap}.pphd span{white-space:nowrap;font-size:16px!important}
+.ppsec>h3 small{font-size:14px;font-weight:400;color:#8b8573}
+.ppsec>h3 i{margin-left:auto;font-style:normal;font-size:16px;font-weight:400;color:#8a6a1e}
+.ppsec>h3 u{font-size:15px;text-decoration:none;color:#8b8573;transition:transform .2s}
+.ppsec.shut>h3 u{transform:rotate(-90deg)}
+.pp{display:flex;align-items:flex-start;gap:2px;position:relative}
+.ppb{flex:1;display:flex;align-items:flex-start;gap:10px;min-width:0}
+.ppk{flex:none;width:20px;height:20px;margin-top:7px;border:1.6px solid var(--ink);border-radius:3px 6px 4px 5px;display:grid;place-items:center;color:var(--pen)}
+.ppk svg{width:15px;height:15px;stroke-width:3}
+.ppt{flex:1;min-width:0}
+.ppt small{font-size:14px;color:#8b8573}
+.pp.on .ppt{color:#8b8573;text-decoration:line-through;text-decoration-color:rgba(39,71,154,.55);text-decoration-thickness:1.5px}
+.pp.skp .ppt{color:#8b8573}
+.pp .rwhy{display:block;font-size:14px;line-height:20px;margin:-6px 0 8px;color:#8b8573}
+.pps{flex:none;font-size:14px!important;color:#8a6a1e!important;text-decoration:underline;opacity:.75;padding:0 6px!important}
+.ppadd{display:block;height:34px;font-size:16px!important;color:#8a6a1e!important;opacity:.85}
+.ppmore{display:block;height:34px;font-size:16px!important;color:var(--pen)!important;text-decoration:underline}
+.ppsub{margin:0 0 0 30px}
+.ppsub .pp .ppk{width:16px;height:16px;margin-top:9px}
+.ppempty{color:#8b8573;font-size:17px}
+.ppfoot{display:flex;justify-content:flex-end}
+.paper .hsteps{display:inline-flex;gap:4px;margin-left:6px;vertical-align:middle}
 </style>
 
 
@@ -2525,6 +2558,7 @@ function taskGroups(list,o){
   return '<div class="tgrp"><div class="tgh" style="--c:'+a.c+'"><i></i><b>'+esc(a.name)+'</b><span>'+gs[k].length+'</span></div>'+gs[k].map(function(t){return taskRow(t,o)}).join('')+'</div>'}).join('');
 }
 function viewToday(){
+ if(true)return paperHtml();
  var list=todayList(),d=new Date();
  var dayLbl=d.toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'});
  var done=doneToday().length,total=list.length+done;
@@ -5270,7 +5304,7 @@ function habAddDlg(g){
  openDlg('<h3>Add a habit</h3><div class="fld"><label for="haN">Habit</label><input id="haN" maxlength="80" placeholder="What do you do?"></div><div class="fld"><label for="haF">How often</label><select id="haF"><option value="d">Every day</option><option value="wd">Weekdays</option><option value="we">Weekends</option></select></div><div class="dact"><button class="k" data-dact="cancel">Cancel</button><button class="k go" data-dact="haok">Add</button></div>');
  var d=$('#dlg');d.dataset.kind='hadd';d.dataset.id=g;
 }
-function rvToggle(){rvFix();var v=rvVis(),i=pvMode?2:rvMode?1:0;if(v.length<2)return '';return '<div class="rseg" data-v="'+i+'" style="--n:'+v.length+';--i:'+v.indexOf(i)+'" role="tablist">'+v.map(function(k){return '<button class="'+(i===k?'on':'')+'" data-act="rv" data-v="'+k+'" role="tab" aria-selected="'+(i===k)+'">'+RVN[k]+'</button>'}).join('')+'</div>'}
+function rvToggle(){return '';rvFix();var v=rvVis(),i=pvMode?2:rvMode?1:0;if(v.length<2)return '';return '<div class="rseg" data-v="'+i+'" style="--n:'+v.length+';--i:'+v.indexOf(i)+'" role="tablist">'+v.map(function(k){return '<button class="'+(i===k?'on':'')+'" data-act="rv" data-v="'+k+'" role="tab" aria-selected="'+(i===k)+'">'+RVN[k]+'</button>'}).join('')+'</div>'}
 
 
 /* routine: long-press to drag and reorder */
@@ -6446,6 +6480,48 @@ function secAct(a,d){
   }
  }
 }
+
+/* ================= Paper checklist (home) */
+var ppShut={},ppMore=false;
+var PPG=[['am','Morning','6am to 10am'],['day','Through the day','10am to 7pm'],['wind','Evening','7pm to midnight'],['prep','Before bed','prep for tomorrow'],['rev','End of day','review']];
+function ppRow(kind,x,t){
+ if(kind==='h'){
+  var on=habitDone(x,t),tt=hTimes(x),c=habitCount(x,t),sk=x.skips&&x.skips[t];
+  return '<div class="pp'+(on?' on':'')+(sk&&!on?' skp':'')+'"><button class="ppb" data-act="hab" data-id="'+x.id+'" data-day="'+t+'" aria-pressed="'+on+'"><span class="ppk">'+(on?I('check',15):sk?'–':'')+'</span><span class="ppt">'+esc(x.name)+(tt>1&&!hSteps(x).length?' <small>'+c+'/'+tt+'</small>':'')+hStepsHtml(x,c)+'</span></button>'+(on?'':'<button class="pps" data-act="skip" data-id="'+x.id+'" data-day="'+t+'">'+(sk?'why':'skip')+'</button>')+'</div>'+(sk&&!on?'<div class="pp"><span class="rwhy" style="margin-left:30px">Skipped: '+esc(sk)+'</span></div>':'');
+ }
+ var done=x.status==='done',st=x.steps||[],o=!!rvOpen[x.id];
+ return '<div class="pp task'+(done?' on':'')+'"><button class="ppb" data-act="toggle" data-id="'+x.id+'" aria-pressed="'+done+'"><span class="ppk">'+(done?I('check',15):'')+'</span><span class="ppt">'+(x.pri?'<span style="color:var(--gold3)">★</span> ':'')+esc(x.title)+(st.length?' <small>'+st.filter(function(z){return z.done}).length+'/'+st.length+'</small>':'')+'</span></button>'+(st.length?'<button class="pps" data-act="rvx" data-id="'+x.id+'" aria-expanded="'+o+'">'+(o?'hide':'steps')+'</button>':'')+'<button class="pps" data-act="edit" data-kind="task" data-id="'+x.id+'">edit</button></div>'+
+  (st.length&&o?'<div class="ppsub">'+st.map(function(z){return '<div class="pp'+(z.done?' on':'')+'"><button class="ppb" data-act="rvs" data-id="'+x.id+'" data-sid="'+z.id+'"><span class="ppk">'+(z.done?I('check',12):'')+'</span><span class="ppt">'+esc(z.t)+'</span></button></div>'}).join('')+'</div>':'');
+}
+function ppSec(key,title,sub,rows,dn,n,add){
+ var shut=ppShut[key]!==undefined?ppShut[key]:(n>0&&dn===n);
+ return '<div class="ppsec'+(shut?' shut':'')+'" data-g="'+key+'"><h3 data-act="ppx" data-k="'+key+'" role="button" aria-expanded="'+!shut+'"><u>▾</u>'+esc(title)+(sub?' <small>'+esc(sub)+'</small>':'')+'<i>'+dn+'/'+n+'</i></h3>'+(shut?'':rows+add)+'</div>';
+}
+function paperHtml(){
+ var t=today(),h='',allN=0,allD=0,dl=new Date().toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'});
+ var live=todayList(),dn0=doneToday(),tn=live.length+dn0.length;
+ var lim=7,shown=ppMore?live:live.slice(0,lim),rows='';
+ var P=plan(),pd=P[dkey(t)],lg=gymLogOf(t),gn=0,gd=0;
+ if(pd&&pd.ex.length){gn=1;gd=lg&&lg.fin?1:0;rows+='<div class="pp'+(gd?' on':'')+'"><button class="ppb" data-act="app" data-app="gym"><span class="ppk">'+(gd?I('check',15):'')+'</span><span class="ppt">Gym: '+esc(pd.name)+' <small>open</small></span></button></div>'}
+ rows+=shown.map(function(x){return ppRow('t',x,t)}).join('');
+ if(live.length>lim)rows+='<button class="ppmore" data-act="ppm">'+(ppMore?'Show fewer':'Show '+(live.length-lim)+' more')+'</button>';
+ rows+=dn0.map(function(x){return ppRow('t',x,t)}).join('');
+ if(!tn&&!gn)rows+='<div class="ppempty">Nothing planned yet. Write one in the box above.</div>';
+ var td=dn0.length+gd,tt=tn+gn;allN+=tt;allD+=td;
+ var body=ppSec('tasks','To do today','',rows,td,tt,'<button class="ppadd" data-act="nsfocus">+ add a task</button>');
+ var dueH=S.habits.filter(function(x){return dueOn(x,t)});
+ PPG.forEach(function(g){
+  var seen={},hs=dueH.filter(function(x){return rvGroup(x)===g[0]}).filter(function(x){var k=(x.name||'').trim().toLowerCase();if(seen[k])return false;seen[k]=1;return true});
+  hs.sort(function(a,b){return (a.o||50)-(b.o||50)});
+  var lv=hs.filter(function(x){return !(x.skips&&x.skips[t])}),dn=lv.filter(function(x){return habitDone(x,t)}).length;
+  allN+=lv.length;allD+=dn;
+  if(!hs.length)return;
+  body+=ppSec(g[0],g[1],g[2],hs.map(function(x){return ppRow('h',x,t)}).join(''),dn,lv.length,'<button class="ppadd" data-act="hadd" data-g="'+g[0]+'">+ add a habit</button>');
+ });
+ h='<div class="paper"><div class="pphd"><b>'+esc(dl)+'</b><span>'+allD+' of '+allN+' done</span></div>'+body+'<div class="ppfoot"><button class="pps" data-act="wreview">weekly review</button></div></div>';
+ return h;
+}
+rvMode=false;pvMode=false;
 var VIEWS={today:viewToday,inbox:viewInbox,goals:viewGoals,habits:viewHabits,rewards:viewRewards,review:viewReview};
 var TABS=[['today','Today'],['inbox','Inbox'],['goals','Goals'],['habits','Habits'],['rewards','Rewards'],['review','Review']];
 
@@ -6800,6 +6876,8 @@ function onClick(e){
   case 'stplan':var tp1=S.stopics.filter(function(x){return x.id===el.dataset.id})[0];if(tp1)openSPlan(null,sSel||today(),tp1.mod,tp1.t);break;
   case 'gsel':gymSel=el.dataset.day;renderGym();break;
   case 'gtick':gymTick(el.dataset.id);break;
+  case 'ppx':{var pk=el.dataset.k,sh=el.closest('.ppsec').classList.contains('shut');ppShut[pk]=!sh;renderView();break}
+  case 'ppm':ppMore=!ppMore;renderView();break;
   case 'gstart':gymStart();break;
   case 'gskip':(S.gskip=S.gskip||[]).push(today());save();renderGym();toast('Skipped. Moved to the next free day');break;
   case 'gunskip':S.gskip=(S.gskip||[]).filter(function(x){return x!==el.dataset.day});save();renderGym();break;
